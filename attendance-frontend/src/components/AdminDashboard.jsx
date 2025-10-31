@@ -100,8 +100,17 @@ export default function AdminDashboard({ token, api }) {
 
           {subView === "list" && (
             <div style={{ marginTop: "16px" }}>
+              {/* {loading ? (
+                <div className="card">Loading employees...</div>
+              ) : (
+                <EmployeeList employees={employees} onDelete={deleteEmployee} />
+              )} */}
               {loading ? (
                 <div className="card">Loading employees...</div>
+              ) : employees.length === 0 ? (
+                <div className="card" style={{ textAlign: "center", padding: "12px" }}>
+                  No employees found
+                </div>
               ) : (
                 <EmployeeList employees={employees} onDelete={deleteEmployee} />
               )}

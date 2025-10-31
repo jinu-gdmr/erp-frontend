@@ -1,7 +1,7 @@
 // const API_BASE = process.env.REACT_APP_API || "http://localhost:5000/api";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// 🔁 Reusable JSON request helper
+// Reusable JSON request helper
 async function request(path, method = "GET", body, token) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -18,12 +18,12 @@ async function request(path, method = "GET", body, token) {
 }
 
 export default {
-  // 🧑‍💻 Authentication
+  // Authentication
   login: (payload) => request("/login", "POST", payload),
   registerAdmin: (payload, token) =>
     request("/register-admin", "POST", payload, token),
 
-  // 👥 Employees
+  //  Employees
   addEmployee: (payload, token) =>
     request("/admin/employees", "POST", payload, token),
   listEmployees: (token) => request("/admin/employees", "GET", null, token),
@@ -32,7 +32,7 @@ export default {
   editEmployee: (id, payload, token) =>
     request(`/admin/employees/${id}`, "PUT", payload, token),
 
-  // ⏰ Attendance
+  // Attendance
   checkin: (token) => request("/attendance/checkin", "POST", null, token),
   checkout: (token) => request("/attendance/checkout", "POST", null, token),
   myAttendance: (token) => request("/my/attendance", "GET", null, token),
@@ -40,7 +40,7 @@ export default {
   employeeAttendance: (id, token) =>
     request(`/admin/attendance/${id}`, "GET", null, token),
 
-  // 📸 Attendance with Camera Photo
+  // Attendance with Camera Photo
   checkinWithPhoto: async (token, imageData) => {
     const res = await fetch(`${API_BASE}/attendance/checkin-photo`, {
       method: "POST",
@@ -69,14 +69,14 @@ export default {
     return data;
   },
 
-  // 📝 Leaves
+  //  Leaves
   applyLeave: (payload, token) => request("/leaves", "POST", payload, token),
   adminLeaves: (token) => request("/admin/leaves", "GET", null, token),
   updateLeave: (id, payload, token) =>
     request(`/admin/leaves/${id}`, "PUT", payload, token),
   myLeaves: (token) => request("/my/leaves", "GET", null, token),
 
-  // 📎 Leave with attachment (multipart/form-data)
+  //  Leave with attachment (multipart/form-data)
   applyLeaveWithFile: async (payload, file, token) => {
     const formData = new FormData();
     formData.append("date", payload.date);
