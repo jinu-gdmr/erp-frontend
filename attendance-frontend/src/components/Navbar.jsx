@@ -6,7 +6,7 @@ export default function Navbar({ user, onLogout }) {
       <div className="brand">
         <div className="logo">A</div>
         <div>
-          <div style={{fontWeight:700}}>Attendance App</div>
+          <div style={{fontWeight:700}}>Gdmr Connect</div>
           <div className="small">Simple attendance & leave management</div>
         </div>
       </div>
