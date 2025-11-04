@@ -42,83 +42,85 @@ export default function AdminLeavePage({ token, api }) {
       {!loading && leaves.length === 0 && <div>No leave requests yet.</div>}
 
       {!loading && leaves.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Employee ID</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Applied</th>
-              <th>Attachment</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaves.map((l) => (
-              <tr key={l._id}>
-                <td>{l.user_id}</td>
-                <td>{l.date}</td>
-                <td>{l.type}</td>
-                <td>{l.reason || "-"}</td>
-                <td>
-                  <span
-                    style={{
-                      color:
-                        l.status === "Approved"
-                          ? "green"
-                          : l.status === "Rejected"
-                          ? "red"
-                          : "#b91c1c",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {l.status}
-                  </span>
-                </td>
-                <td>
-                  {l.applied_at
-                    ? new Date(l.applied_at).toLocaleString()
-                    : "-"}
-                </td>
-
-                <td>
-                  {l.attachment_url ? (
-                    <a
-                      href={`http://localhost:5000${l.attachment_url}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      View File
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-
-                <td>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button
-                      className="btn"
-                      style={{ background: "green" }}
-                      onClick={() => updateStatus(l._id, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className="btn"
-                      style={{ background: "#b91c1c" }}
-                      onClick={() => updateStatus(l._id, "Rejected")}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </td>
+        <div className="leave-table-wrapper">
+          <table className="leave-table">
+            <thead>
+              <tr>
+                <th>Employee ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Applied</th>
+                <th>Attachment</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {leaves.map((l) => (
+                <tr key={l._id}>
+                  <td>{l.user_id}</td>
+                  <td>{l.date}</td>
+                  <td>{l.type}</td>
+                  <td>{l.reason || "-"}</td>
+                  <td>
+                    <span
+                      style={{
+                        color:
+                          l.status === "Approved"
+                            ? "green"
+                            : l.status === "Rejected"
+                            ? "red"
+                            : "#b91c1c",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {l.status}
+                    </span>
+                  </td>
+                  <td>
+                    {l.applied_at
+                      ? new Date(l.applied_at).toLocaleString()
+                      : "-"}
+                  </td>
+
+                  <td>
+                    {l.attachment_url ? (
+                      <a
+                        href={`http://localhost:5000${l.attachment_url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        View File
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+
+                  <td>
+                    <div className="leave-actions">
+                      <button
+                        className="btn"
+                        style={{ background: "green" }}
+                        onClick={() => updateStatus(l._id, "Approved")}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="btn"
+                        style={{ background: "#b91c1c" }}
+                        onClick={() => updateStatus(l._id, "Rejected")}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
