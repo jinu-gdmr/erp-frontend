@@ -66,9 +66,9 @@ export default function AdminLeavePage({ token, api }) {
                   <span
                     style={{
                       color:
-                        l.status === "approved"
+                        l.status === "Approved"
                           ? "green"
-                          : l.status === "rejected"
+                          : l.status === "Rejected"
                           ? "red"
                           : "#b91c1c",
                       fontWeight: 600,
@@ -102,14 +102,14 @@ export default function AdminLeavePage({ token, api }) {
                     <button
                       className="btn"
                       style={{ background: "green" }}
-                      onClick={() => updateStatus(l._id, "approved")}
+                      onClick={() => updateStatus(l._id, "Approved")}
                     >
                       Approve
                     </button>
                     <button
                       className="btn"
                       style={{ background: "#b91c1c" }}
-                      onClick={() => updateStatus(l._id, "rejected")}
+                      onClick={() => updateStatus(l._id, "Rejected")}
                     >
                       Reject
                     </button>

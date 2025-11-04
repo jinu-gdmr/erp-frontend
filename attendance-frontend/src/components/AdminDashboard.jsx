@@ -34,7 +34,7 @@ export default function AdminDashboard({ token, api }) {
   }
 
   async function deleteEmployee(id) {
-    if (!window.confirm("Delete this employee?")) return;
+    // if (!window.confirm("Delete this employee?")) return;
     await api.deleteEmployee(id, token);
     await loadEmployees();
   }
