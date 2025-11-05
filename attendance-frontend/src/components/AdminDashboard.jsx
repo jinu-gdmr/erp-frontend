@@ -42,12 +42,9 @@ export default function AdminDashboard({ token, api }) {
   return (
     <div>
       {/* Main Header */}
-      <div
-        className="card"
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
+      <div className="card">
         <h2 style={{ color: "#b91c1c", margin: 0 }}>Admin Dashboard</h2>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div className="admin-buttons">
           <button
             className={`btn ${view === "employees" ? "" : "ghost"}`}
             onClick={() => setView("employees")}
@@ -73,10 +70,7 @@ export default function AdminDashboard({ token, api }) {
       {view === "employees" && (
         <>
           {/* Sub Tabs */}
-          <div
-            className="card"
-            style={{ display: "flex", gap: "8px", marginTop: "12px" }}
-          >
+          <div className="card admin-buttons" style={{ marginTop: "12px" }}>
             <button
               className={`btn ${subView === "add" ? "" : "ghost"}`}
               onClick={() => setSubView("add")}
