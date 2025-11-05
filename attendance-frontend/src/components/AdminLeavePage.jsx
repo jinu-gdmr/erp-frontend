@@ -46,7 +46,7 @@ export default function AdminLeavePage({ token, api }) {
           <table className="leave-table">
             <thead>
               <tr>
-                <th>Employee ID</th>
+                <th>Employee Name</th>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Reason</th>
@@ -59,7 +59,7 @@ export default function AdminLeavePage({ token, api }) {
             <tbody>
               {leaves.map((l) => (
                 <tr key={l._id}>
-                  <td>{l.user_id}</td>
+                  <td>{l.employee_name}</td>
                   <td>{l.date}</td>
                   <td>{l.type}</td>
                   <td>{l.reason || "-"}</td>
