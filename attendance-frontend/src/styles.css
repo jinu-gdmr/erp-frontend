@@ -301,10 +301,10 @@ label {
 .leave-table-wrapper {
   overflow-x: auto;
   margin-top: 8px;
+  display: block;
 }
 .leave-table {
   width: 100%;
-  min-width: 600px; /* Ensure table doesn't shrink too much */
   border-collapse: collapse;
 }
 .leave-table th,
@@ -328,37 +328,169 @@ label {
   gap: 6px;
 }
 
+/* ---------------- Leave Request Cards (Mobile) ---------------- */
+.leave-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.leave-card {
+  background: #fff;
+  border: 1px solid rgba(185, 28, 28, 0.1);
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.leave-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.leave-card-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.leave-card-date {
+  font-size: 13px;
+  color: #666;
+}
+
+.leave-card-status {
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(185, 28, 28, 0.08);
+}
+
+.leave-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.leave-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.leave-card-label {
+  font-weight: 500;
+  color: #666;
+  min-width: 80px;
+}
+
+.leave-card-value {
+  color: var(--text);
+  text-align: right;
+  flex: 1;
+}
+
+.leave-card-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.leave-card-link:hover {
+  text-decoration: underline;
+}
+
+.leave-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.leave-card-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.leave-card-btn.approve {
+  background: green;
+}
+
+.leave-card-btn.approve:hover {
+  background: #15803d;
+}
+
+.leave-card-btn.reject {
+  background: #b91c1c;
+}
+
+.leave-card-btn.reject:hover {
+  background: var(--dark-red);
+}
+
+/* Responsive: Hide table on mobile, show cards */
 @media (max-width: 768px) {
   .leave-table-wrapper {
-    overflow-x: auto;
+    display: none;
   }
 
-  .leave-table th,
-  .leave-table td {
-    font-size: 12px;
-    padding: 8px;
+  .leave-cards {
+    display: flex;
+  }
+}
+
+/* Desktop: Show table, hide cards */
+@media (min-width: 769px) {
+  .leave-table-wrapper {
+    display: block;
   }
 
-  .leave-actions {
-    flex-direction: column;
-    gap: 4px;
+  .leave-cards {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .leave-table-wrapper {
-    overflow-x: auto;
+  .leave-card {
+    padding: 12px;
   }
 
-  .leave-table th,
-  .leave-table td {
-    font-size: 10px;
-    padding: 6px;
+  .leave-card-name {
+    font-size: 15px;
   }
 
-  .leave-actions {
+  .leave-card-row {
+    font-size: 13px;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+  }
+
+  .leave-card-label {
+    min-width: auto;
+  }
+
+  .leave-card-value {
+    text-align: left;
+  }
+
+  .leave-card-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .leave-card-btn {
+    width: 100%;
   }
 }
 
