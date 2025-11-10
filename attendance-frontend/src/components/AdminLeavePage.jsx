@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 
 export default function AdminLeavePage({ token, api }) {
+  const role = localStorage.getItem("role");
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -101,22 +102,25 @@ export default function AdminLeavePage({ token, api }) {
                     </td>
 
                     <td>
-                      <div className="leave-actions">
-                        <button
-                          className="btn"
-                          style={{ background: "green" }}
-                          onClick={() => updateStatus(l._id, "Approved")}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="btn"
-                          style={{ background: "#b91c1c" }}
-                          onClick={() => updateStatus(l._id, "Rejected")}
-                        >
-                          Reject
-                        </button>
-                      </div>
+                      {(role === "admin" || role === "manager") && (
+                        <div className="leave-actions">
+                          <button
+                            className="btn"
+                            style={{ background: "green" }}
+                            onClick={() => updateStatus(l._id, "Approved")}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="btn"
+                            style={{ background: "#b91c1c" }}
+                            onClick={() => updateStatus(l._id, "Rejected")}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
                     </td>
                   </tr>
                 ))}
@@ -178,20 +182,23 @@ export default function AdminLeavePage({ token, api }) {
                     </div>
                   )}
                 </div>
-                <div className="leave-card-actions">
-                  <button
-                    className="btn leave-card-btn approve"
-                    onClick={() => updateStatus(l._id, "Approved")}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="btn leave-card-btn reject"
-                    onClick={() => updateStatus(l._id, "Rejected")}
-                  >
-                    Reject
-                  </button>
-                </div>
+                {(role === "admin" || role === "manager") && (
+                  <div className="leave-card-actions">
+                    <button
+                      className="btn leave-card-btn approve"
+                      onClick={() => updateStatus(l._id, "Approved")}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="btn leave-card-btn reject"
+                      onClick={() => updateStatus(l._id, "Rejected")}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+
               </div>
             ))}
           </div>

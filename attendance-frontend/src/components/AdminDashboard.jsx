@@ -3,6 +3,8 @@ import EmployeeForm from "./EmployeeForm";
 import EmployeeList from "./EmployeeList";
 import AdminLeavePage from "./AdminLeavePage";
 import AdminAttendancePage from "./AdminAttendancePage";
+import RegisterManager from "./RegisterManager";
+
 
 export default function AdminDashboard({ token, api }) {
   const [employees, setEmployees] = useState([]);
@@ -45,12 +47,22 @@ export default function AdminDashboard({ token, api }) {
       <div className="card">
         <h2 style={{ color: "#b91c1c", margin: 0 }}>Admin Dashboard</h2>
         <div className="admin-buttons">
+          
+
           <button
             className={`btn ${view === "employees" ? "" : "ghost"}`}
             onClick={() => setView("employees")}
           >
             Employees
           </button>
+
+          <button
+            className={`btn ${view === "manager" ? "" : "ghost"}`}
+            onClick={() => setView("manager")}
+          >
+            Managers
+          </button>
+          
           <button
             className={`btn ${view === "leaves" ? "" : "ghost"}`}
             onClick={() => setView("leaves")}
@@ -133,6 +145,16 @@ export default function AdminDashboard({ token, api }) {
           <AdminAttendancePage token={token} api={api} />
         </div>
       )}
+
+      {view === "manager" && (
+        <div style={{ marginTop: "16px" }}>
+          <RegisterManager token={token} api={api} />
+        </div>
+      )}
+
+
+
     </div>
+
   );
 }
