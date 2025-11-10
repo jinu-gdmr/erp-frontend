@@ -5,6 +5,9 @@ import AdminDashboard from "./components/AdminDashboard";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import SplashScreen from "./components/SplashScreen";
 import api from "./api";
+import ManagerDashboard from "./components/ManagerDashboard";
+
+
 
 export default function App(){
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -54,18 +57,22 @@ export default function App(){
   }
 
   return (
-    <>
-      <Navbar user={user} onLogout={onLogout}/>
-      <div className="app">
-        {role === "admin" ? (
-          <AdminDashboard token={token} api={api} />
-        ) : (
-          <EmployeeDashboard token={token} api={api} />
-        )}
-        <div className="footer">
-          &copy; {new Date().getFullYear()} ERP App — GDMR
-        </div>
+  <>
+    <Navbar user={user} onLogout={onLogout} />
+    <div className="app">
+      {role === "admin" ? (
+        <AdminDashboard token={token} api={api} />
+      ) : role === "manager" ? (
+        <ManagerDashboard token={token} api={api} />
+      ) : (
+        <EmployeeDashboard token={token} api={api} />
+      )}
+
+      <div className="footer">
+        &copy; {new Date().getFullYear()} ERP App — GDMR
       </div>
-    </>
-  );
+    </div>
+  </>
+);
+
 }

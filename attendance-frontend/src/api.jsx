@@ -23,6 +23,10 @@ export default {
   registerAdmin: (payload, token) =>
     request("/register-admin", "POST", payload, token),
 
+  registerManager: (payload, token) =>
+    request("/register-manager", "POST", payload, token),
+
+
   //  Employees
   addEmployee: (payload, token) =>
     request("/admin/employees", "POST", payload, token),
@@ -94,4 +98,26 @@ export default {
     if (!res.ok) throw data;
     return data;
   },
+
+
+  getManagers: async (token) => {
+    const res = await fetch(`${API_BASE}/admin/managers`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw data;
+    return data;
+  },
+
+  deleteManager: async (id, token) => {
+    const res = await fetch(`${API_BASE}/admin/managers/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw data;
+    return data;
+  },
+
+
 };
