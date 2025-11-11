@@ -1,5 +1,7 @@
 // const API_BASE = process.env.REACT_APP_API || "http://localhost:5000/api";
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "https://erp-backend-6wd5.onrender.com";
+
 
 // Reusable JSON request helper
 async function request(path, method = "GET", body, token) {
