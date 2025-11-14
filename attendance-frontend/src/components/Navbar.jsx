@@ -23,7 +23,7 @@ export default function Navbar({ user, onLogout }) {
         <div className="brand">
           <img src={Logo} alt="GDMR Logo" className="logo-img" />
           <div>
-            <div style={{ fontWeight: 700 }}>Gdmr Connect</div>
+            <div style={{ fontWeight: 700 }}>GDMR CONNECT</div>
             <div className="small">Simple attendance & leave management</div>
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function Navbar({ user, onLogout }) {
         </div>
       </div>
 
-      {/* ✅ Logout Confirmation Modal */}
+      {/*  Logout Confirmation Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-box">

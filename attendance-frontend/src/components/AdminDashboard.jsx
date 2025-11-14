@@ -4,14 +4,14 @@ import EmployeeList from "./EmployeeList";
 import AdminLeavePage from "./AdminLeavePage";
 import AdminAttendancePage from "./AdminAttendancePage";
 import RegisterManager from "./RegisterManager";
-
+import AdminAttendanceSummary from "./AdminAttendanceSummary";
 
 export default function AdminDashboard({ token, api }) {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [view, setView] = useState("employees"); // employees | leaves | attendance
-  const [subView, setSubView] = useState("add"); // add | list (for employee view)
+  const [view, setView] = useState("employees");
+  const [subView, setSubView] = useState("add");
 
   async function loadEmployees() {
     setLoading(true);
@@ -32,11 +32,10 @@ export default function AdminDashboard({ token, api }) {
   async function addEmployee(data) {
     await api.addEmployee(data, token);
     await loadEmployees();
-    setSubView("list"); // switch to list after add
+    setSubView("list");
   }
 
   async function deleteEmployee(id) {
-    // if (!window.confirm("Delete this employee?")) return;
     await api.deleteEmployee(id, token);
     await loadEmployees();
   }
@@ -46,9 +45,8 @@ export default function AdminDashboard({ token, api }) {
       {/* Main Header */}
       <div className="card">
         <h2 style={{ color: "#b91c1c", margin: 0 }}>Admin Dashboard</h2>
-        <div className="admin-buttons">
-          
 
+        <div className="admin-buttons">
           <button
             className={`btn ${view === "employees" ? "" : "ghost"}`}
             onClick={() => setView("employees")}
@@ -62,26 +60,34 @@ export default function AdminDashboard({ token, api }) {
           >
             Managers
           </button>
-          
+
           <button
             className={`btn ${view === "leaves" ? "" : "ghost"}`}
             onClick={() => setView("leaves")}
           >
             Leaves
           </button>
+
           <button
             className={`btn ${view === "attendance" ? "" : "ghost"}`}
             onClick={() => setView("attendance")}
           >
             Attendance
           </button>
+
+          {/* NEW: Attendance Summary */}
+          <button
+            className={`btn ${view === "summary" ? "" : "ghost"}`}
+            onClick={() => setView("summary")}
+          >
+            Summary
+          </button>
         </div>
       </div>
 
-      {/* Employee Management */}
+      {/* Employees */}
       {view === "employees" && (
         <>
-          {/* Sub Tabs */}
           <div className="card admin-buttons" style={{ marginTop: "12px" }}>
             <button
               className={`btn ${subView === "add" ? "" : "ghost"}`}
@@ -89,6 +95,7 @@ export default function AdminDashboard({ token, api }) {
             >
               Add Employee
             </button>
+
             <button
               className={`btn ${subView === "list" ? "" : "ghost"}`}
               onClick={() => setSubView("list")}
@@ -97,7 +104,6 @@ export default function AdminDashboard({ token, api }) {
             </button>
           </div>
 
-          {/* Sub View Content */}
           {subView === "add" && (
             <div style={{ marginTop: "16px" }}>
               <EmployeeForm onAdd={addEmployee} />
@@ -106,15 +112,10 @@ export default function AdminDashboard({ token, api }) {
 
           {subView === "list" && (
             <div style={{ marginTop: "16px" }}>
-              {/* {loading ? (
-                <div className="card">Loading employees...</div>
-              ) : (
-                <EmployeeList employees={employees} onDelete={deleteEmployee} />
-              )} */}
               {loading ? (
                 <div className="card">Loading employees...</div>
               ) : employees.length === 0 ? (
-                <div className="card" style={{ textAlign: "center", padding: "12px" }}>
+                <div className="card" style={{ textAlign: "center" }}>
                   No employees found
                 </div>
               ) : (
@@ -122,39 +123,36 @@ export default function AdminDashboard({ token, api }) {
               )}
             </div>
           )}
-
-          <div className="card" style={{ marginTop: "20px" }}>
-            <h3 style={{ color: "#b91c1c" }}>Admin Actions</h3>
-            <p className="small">
-              Export reports and payroll integration will be added soon.
-            </p>
-          </div>
         </>
       )}
 
-      {/* Leave Management */}
+      {/* Leaves */}
       {view === "leaves" && (
         <div style={{ marginTop: "16px" }}>
           <AdminLeavePage token={token} api={api} />
         </div>
       )}
 
-      {/* Attendance Management */}
+      {/* Attendance */}
       {view === "attendance" && (
         <div style={{ marginTop: "16px" }}>
           <AdminAttendancePage token={token} api={api} />
         </div>
       )}
 
+      {/* Manager List + Add Manager */}
       {view === "manager" && (
         <div style={{ marginTop: "16px" }}>
           <RegisterManager token={token} api={api} />
         </div>
       )}
 
-
-
+      {/* NEW: Attendance Summary Dashboard */}
+      {view === "summary" && (
+        <div style={{ marginTop: "16px" }}>
+          <AdminAttendanceSummary token={token} api={api} />
+        </div>
+      )}
     </div>
-
   );
 }
