@@ -69,7 +69,7 @@ export default function App(){
       )}
 
       <div className="footer">
-        &copy; {new Date().getFullYear()} ERP App — GDMR
+        &copy; {new Date().getFullYear()} GDMR CONNECT
       </div>
     </div>
   </>

@@ -1,7 +1,5 @@
-// const API_BASE = process.env.REACT_APP_API || "http://localhost:5000/api";
-// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const API_BASE = import.meta.env.VITE_API_URL || "https://erp-backend-6wd5.onrender.com";
-
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
+// const API_BASE = import.meta.env.VITE_API_URL || "https://erp-backend-6wd5.onrender.com/api";
 
 // Reusable JSON request helper
 async function request(path, method = "GET", body, token) {
@@ -28,8 +26,7 @@ export default {
   registerManager: (payload, token) =>
     request("/register-manager", "POST", payload, token),
 
-
-  //  Employees
+  // Employees
   addEmployee: (payload, token) =>
     request("/admin/employees", "POST", payload, token),
   listEmployees: (token) => request("/admin/employees", "GET", null, token),
@@ -46,7 +43,7 @@ export default {
   employeeAttendance: (id, token) =>
     request(`/admin/attendance/${id}`, "GET", null, token),
 
-  // Attendance with Camera Photo
+  // Attendance with Photo
   checkinWithPhoto: async (token, imageData) => {
     const res = await fetch(`${API_BASE}/attendance/checkin-photo`, {
       method: "POST",
@@ -75,14 +72,14 @@ export default {
     return data;
   },
 
-  //  Leaves
+  // Leaves
   applyLeave: (payload, token) => request("/leaves", "POST", payload, token),
   adminLeaves: (token) => request("/admin/leaves", "GET", null, token),
   updateLeave: (id, payload, token) =>
     request(`/admin/leaves/${id}`, "PUT", payload, token),
   myLeaves: (token) => request("/my/leaves", "GET", null, token),
 
-  //  Leave with attachment (multipart/form-data)
+  // Leave with file
   applyLeaveWithFile: async (payload, file, token) => {
     const formData = new FormData();
     formData.append("date", payload.date);
@@ -101,6 +98,20 @@ export default {
     return data;
   },
 
+    // Attendance Summary (Admin Dashboard)
+  getAttendanceSummary: async (month, token) => {
+    const res = await fetch(
+      `${API_BASE}/admin/attendance-summary?month=${month}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw data;
+    return data;
+  },
+
 
   getManagers: async (token) => {
     const res = await fetch(`${API_BASE}/admin/managers`, {
@@ -111,6 +122,8 @@ export default {
     return data;
   },
 
+  
+
   deleteManager: async (id, token) => {
     const res = await fetch(`${API_BASE}/admin/managers/${id}`, {
       method: "DELETE",
@@ -120,6 +133,5 @@ export default {
     if (!res.ok) throw data;
     return data;
   },
-
-
 };
+

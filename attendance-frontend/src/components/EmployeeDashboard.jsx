@@ -208,7 +208,7 @@ export default function EmployeeDashboard({ token, api }) {
           <textarea
             className="input"
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => setReason(e.target.value)} required
           />
 
           <label>Attachment (optional)</label>
