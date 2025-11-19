@@ -43,6 +43,9 @@ export default {
   employeeAttendance: (id, token) =>
     request(`/admin/attendance/${id}`, "GET", null, token),
 
+  todayStats: (token) => request("/admin/today-stats", "GET", null, token),
+
+
   // Attendance with Photo
   checkinWithPhoto: async (token, imageData) => {
     const res = await fetch(`${API_BASE}/attendance/checkin-photo`, {

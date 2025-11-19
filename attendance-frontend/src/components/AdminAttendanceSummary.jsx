@@ -57,19 +57,28 @@ export default function AdminAttendanceSummary({ token, api }) {
           box-shadow: 0 0 4px rgba(185, 28, 28, 0.4);
         }
 
+        /* Scrollable Table Wrapper */
+        .table-container {
+          max-height: 420px; 
+          overflow-y: auto;
+          border-radius: 10px;
+          border: 1px solid #ececec;
+        }
+
         .styled-table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 10px;
           font-size: 15px;
-          border-radius: 10px;
-          overflow: hidden;
         }
 
-        .styled-table thead tr {
+        /* Sticky Header */
+        .styled-table thead th {
           background-color: #b91c1c;
           color: #ffffff;
           text-align: left;
+          position: sticky;
+          top: 0;
+          z-index: 10;
         }
 
         .styled-table th,
@@ -98,7 +107,7 @@ export default function AdminAttendanceSummary({ token, api }) {
       {/* ---------------- CSS DESIGN END ---------------- */}
 
       <div className="card">
-        <h3 style={{ color: "#b91c1c" }}>📊 Monthly Attendance Summary</h3>
+        <h3 style={{ color: "#b91c1c" }}>Monthly Attendance Summary</h3>
 
         {/* Month Selector */}
         <input
@@ -111,29 +120,32 @@ export default function AdminAttendanceSummary({ token, api }) {
 
         <h4>Total Employees: {summary.total_employees}</h4>
 
-        <table className="styled-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Present</th>
-              <th>Absent</th>
-              <th>On Leave</th>
-              <th>Not Checked-in</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {Object.entries(summary.days).map(([date, d]) => (
-              <tr key={date}>
-                <td>{date}</td>
-                <td>{d.present.length}</td>
-                <td>{d.absent.length}</td>
-                <td>{d.leave.length}</td>
-                <td>{d.not_checked_in.length}</td>
+        {/* Scrollable Table */}
+        <div className="table-container">
+          <table className="styled-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>On Leave</th>
+                <th>Not Checked-in</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {Object.entries(summary.days).map(([date, d]) => (
+                <tr key={date}>
+                  <td>{date}</td>
+                  <td>{d.present.length}</td>
+                  <td>{d.absent.length}</td>
+                  <td>{d.leave.length}</td>
+                  <td>{d.not_checked_in.length}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

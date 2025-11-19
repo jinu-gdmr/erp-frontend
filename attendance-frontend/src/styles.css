@@ -676,3 +676,62 @@ label {
   from { transform: scale(0.85); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+
+
+/* Grid responsive layout */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+}
+
+.overview-card {
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.25s ease;
+  border: 2px solid transparent;
+}
+
+.overview-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(185, 28, 28, 0.25);
+}
+
+
+/* Titles */
+.overview-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Count numbers */
+.overview-count {
+  font-size: 26px;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+/* Colors */
+.green-text { color: #16a34a; }
+.red-text { color: #dc2626; }
+.red-dark-text { color: #b91c1c; }
+.orange-text { color: #d97706; }
+
+/* Mobile padding fix */
+@media (max-width: 480px) {
+  .overview-card {
+    padding: 14px;
+  }
+  .overview-title {
+    font-size: 14px;
+  }
+  .overview-count {
+    font-size: 22px;
+  }
+}
+
