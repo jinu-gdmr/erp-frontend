@@ -5,16 +5,27 @@ import AdminLeavePage from "./AdminLeavePage";
 import AdminAttendancePage from "./AdminAttendancePage";
 import RegisterManager from "./RegisterManager";
 import AdminAttendanceSummary from "./AdminAttendanceSummary";
-import { FaCheckCircle, FaTimesCircle, FaUserClock, FaUserSlash } from "react-icons/fa";
-
+import {
+  FaUserPlus,
+  FaUsers,
+  FaCalendarCheck,
+  FaChartPie,
+  FaUserTie,
+  FaArrowLeft,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaUserClock,
+  FaUserSlash,
+  FaTimes
+} from "react-icons/fa";
 
 export default function AdminDashboard({ token, api }) {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState("dashboard"); 
+  const [subView, setSubView] = useState("list");
 
-  const [view, setView] = useState("employees");
-  const [subView, setSubView] = useState("add");
-
+  // Stats State
   const [stats, setStats] = useState({
     present: 0,
     absent: 0,
@@ -22,6 +33,13 @@ export default function AdminDashboard({ token, api }) {
     not_checked_in: 0,
   });
 
+  // Modal State for Details
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailTitle, setDetailTitle] = useState("");
+  const [detailList, setDetailList] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Load Initial Data
   async function loadEmployees() {
     setLoading(true);
     try {
@@ -34,21 +52,21 @@ export default function AdminDashboard({ token, api }) {
     }
   }
 
- async function loadTodayStats() {
-  try {
-    const res = await api.todayStats(token);
-    setStats(res); // direct update
-  } catch (err) {
-    console.error("Stats load error:", err);
+  async function loadTodayStats() {
+    try {
+      const res = await api.todayStats(token);
+      setStats(res);
+    } catch (err) {
+      console.error("Stats load error:", err);
+    }
   }
-}
-
 
   useEffect(() => {
     loadEmployees();
     loadTodayStats();
   }, []);
 
+  // --- Actions ---
   async function addEmployee(data) {
     await api.addEmployee(data, token);
     await loadEmployees();
@@ -60,153 +78,314 @@ export default function AdminDashboard({ token, api }) {
     await loadEmployees();
   }
 
+  // --- Handle Click on Stat Item ---
+  async function handleStatClick(type, title) {
+    setDetailTitle(title);
+    setDetailModalOpen(true);
+    setDetailLoading(true);
+    setDetailList([]);
+
+    try {
+      // 1. Get current month YYYY-MM
+      const now = new Date();
+      const monthStr = now.toISOString().slice(0, 7); // "2023-10"
+      
+      // 2. Fetch detailed summary
+      const summaryData = await api.getAttendanceSummary(monthStr, token);
+      
+      // 3. Find today's date key (YYYY-MM-DD)
+      // We look for a date in the response that matches local "today" or relies on the latest entry
+      // For robustness, we construct "today" string matching the API format
+      const todayStr = now.toISOString().slice(0, 10); 
+      
+      // 4. Extract the specific list (present, absent, etc.)
+      // The API returns days object: { "2023-10-27": { present: [...], absent: [...] } }
+      const todayData = summaryData.days && summaryData.days[todayStr];
+
+      if (todayData && todayData[type]) {
+        const listData = todayData[type];
+        
+        // 5. Map IDs to Names if the API returns IDs, or use Objects if provided
+        // Assuming listData might be objects with _id/name OR just IDs
+        // We will match against our full 'employees' list to ensure we have names
+        const enrichedList = listData.map(item => {
+            const id = typeof item === 'object' ? item._id : item;
+            const empDef = employees.find(e => e._id === id);
+            return empDef || (typeof item === 'object' ? item : { name: "Unknown", _id: id });
+        });
+        
+        setDetailList(enrichedList);
+      } else {
+        setDetailList([]); // No data found for today
+      }
+
+    } catch (err) {
+      console.error("Error fetching details", err);
+      alert("Could not load details.");
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  // --- Sub-Components ---
+
+  const QuickLaunchItem = ({ icon, label, onClick }) => (
+    <div className="quick-launch-item" onClick={onClick}>
+      <div className="quick-launch-icon">{icon}</div>
+      <div className="quick-launch-label">{label}</div>
+    </div>
+  );
+
+  // Updated StatItem to be clickable
+  const StatItem = ({ icon, label, count, colorClass, onClick }) => (
+    <div 
+      className="stat-row clickable-stat" 
+      onClick={onClick}
+      title="Click to view details"
+    >
+      <div className={`stat-icon-box ${colorClass}`}>{icon}</div>
+      <div className="stat-info">
+        <span className="stat-count">{count}</span>
+        <span className="stat-label">{label}</span>
+      </div>
+    </div>
+  );
+
+  // --- Main Render ---
+
   return (
     <div>
-      {/* Main Header */}
-      <div className="card">
-        <h2 style={{ color: "#b91c1c", margin: 0 }}>Admin Dashboard</h2>
-      </div>
+      {/* ---------------- CSS for Modal & Clickable Stats ---------------- */}
+      <style>{`
+        .clickable-stat {
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .clickable-stat:hover {
+          transform: translateX(4px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          background: #fff;
+          border-color: #e5e5e5;
+        }
+        .detail-modal-overlay {
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.5); z-index: 3000;
+          display: flex; justify-content: center; align-items: center;
+          animation: fadeIn 0.2s;
+        }
+        .detail-modal-card {
+          background: white; width: 400px; max-width: 90%;
+          border-radius: 12px; padding: 20px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          display: flex; flex-direction: column; max-height: 80vh;
+        }
+        .detail-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+        }
+        .detail-list {
+          overflow-y: auto; flex: 1;
+        }
+        .detail-item {
+          padding: 8px 10px; border-bottom: 1px solid #f9f9f9;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .detail-avatar {
+          width: 32px; height: 32px; background: #eee; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 14px; color: #666; font-weight: bold;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
 
-      {/* TODAY OVERVIEW — Responsive Cards Above Buttons */}
-      <div className="card" style={{ marginTop: "15px" }}>
-        <h3 style={{ color: "#b91c1c", marginBottom: "12px" }}>
-          Today Overview
-        </h3>
-
-        <div className="overview-grid">
-
-          <div className="overview-card">
-            <FaCheckCircle size={32} className="green-text" style={{ marginBottom: "6px" }} />
-            <h4 className="overview-title green-text">Present</h4>
-            <p className="overview-count">{stats.present}</p>
-          </div>
-
-          <div className="overview-card">
-            <FaTimesCircle size={32} className="red-text" style={{ marginBottom: "6px" }} />
-            <h4 className="overview-title red-text">Absent</h4>
-            <p className="overview-count">{stats.absent}</p>
-          </div>
-
-          <div className="overview-card">
-            <FaUserClock size={32} className="red-dark-text" style={{ marginBottom: "6px" }} />
-            <h4 className="overview-title red-dark-text">Leave</h4>
-            <p className="overview-count">{stats.leave}</p>
-          </div>
-
-          <div className="overview-card">
-            <FaUserSlash size={32} className="orange-text" style={{ marginBottom: "6px" }} />
-            <h4 className="overview-title orange-text">Not Checked In</h4>
-            <p className="overview-count">{stats.not_checked_in}</p>
-          </div>
-
+      {/* Header Area */}
+      {view === "dashboard" ? (
+        <div className="dashboard-header-card card">
+          <h2 style={{ color: "var(--red)", margin: 0 }}>Dashboard</h2>
+          <p className="small">Welcome to the Admin Control Panel</p>
         </div>
-      </div>
-
-
-
-      {/* Navigation Buttons */}
-      <div className="card" style={{ marginTop: "15px" }}>
-        <div className="admin-buttons">
-          <button
-            className={`btn ${view === "employees" ? "" : "ghost"}`}
-            onClick={() => setView("employees")}
-          >
-            Employees
+      ) : (
+        <div className="dashboard-header-card card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button className="btn ghost" onClick={() => setView("dashboard")} style={{padding: '8px 12px'}}>
+            <FaArrowLeft /> Back
           </button>
-
-          <button
-            className={`btn ${view === "manager" ? "" : "ghost"}`}
-            onClick={() => setView("manager")}
-          >
-            Managers
-          </button>
-
-          <button
-            className={`btn ${view === "leaves" ? "" : "ghost"}`}
-            onClick={() => setView("leaves")}
-          >
-            Leaves
-          </button>
-
-          <button
-            className={`btn ${view === "attendance" ? "" : "ghost"}`}
-            onClick={() => setView("attendance")}
-          >
-            Attendance
-          </button>
-
-          <button
-            className={`btn ${view === "summary" ? "" : "ghost"}`}
-            onClick={() => setView("summary")}
-          >
-            Summary
-          </button>
+          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>{view} Management</h3>
         </div>
-      </div>
+      )}
 
-      {/* EMPLOYEE MANAGEMENT */}
+      {/* DASHBOARD HOME VIEW (Widgets) */}
+      {view === "dashboard" && (
+        <div className="dashboard-grid-container">
+          
+          {/* Widget 1: Attendance Overview */}
+          <div className="card dashboard-widget">
+            <h4 className="widget-title">Today's Attendance</h4>
+            <div className="stats-list">
+              <StatItem 
+                icon={<FaCheckCircle />} 
+                label="Present" 
+                count={stats.present} 
+                colorClass="text-green"
+                onClick={() => handleStatClick('present', 'Present Today')}
+              />
+              <StatItem 
+                icon={<FaTimesCircle />} 
+                label="Absent" 
+                count={stats.absent} 
+                colorClass="text-red"
+                onClick={() => handleStatClick('absent', 'Absent Today')}
+              />
+              <StatItem 
+                icon={<FaUserClock />} 
+                label="On Leave" 
+                count={stats.leave} 
+                colorClass="text-dark-red"
+                onClick={() => handleStatClick('leave', 'On Leave Today')}
+              />
+              <StatItem 
+                icon={<FaUserSlash />} 
+                label="Not Checked In" 
+                count={stats.not_checked_in} 
+                colorClass="text-orange"
+                onClick={() => handleStatClick('not_checked_in', 'Not Checked In')}
+              />
+            </div>
+          </div>
+
+          {/* Widget 2: Quick Launch */}
+          <div className="card dashboard-widget">
+            <h4 className="widget-title">Quick Launch</h4>
+            <div className="quick-launch-grid">
+              <QuickLaunchItem 
+                icon={<FaUserPlus />} 
+                label="Add Employee" 
+                onClick={() => { setView("employees"); setSubView("add"); }} 
+              />
+              <QuickLaunchItem 
+                icon={<FaUsers />} 
+                label="Employee List" 
+                onClick={() => { setView("employees"); setSubView("list"); }} 
+              />
+              <QuickLaunchItem 
+                icon={<FaCalendarCheck />} 
+                label="Leave Requests" 
+                onClick={() => setView("leaves")} 
+              />
+              
+              <QuickLaunchItem 
+                icon={<FaUserTie />} 
+                label="Managers" 
+                onClick={() => setView("manager")} 
+              />
+              <QuickLaunchItem 
+                icon={<FaChartPie />} 
+                label="Reports" 
+                onClick={() => setView("summary")} 
+              />
+            </div>
+          </div>
+
+          {/* Widget 3: Employee Summary */}
+          <div className="card dashboard-widget">
+             <h4 className="widget-title">Total Workforce</h4>
+             <div style={{display:'flex', justifyContent:'center', alignItems:'center', height:'100%', flexDirection:'column'}}>
+                <div style={{fontSize:'48px', fontWeight:'bold', color:'var(--red)'}}>
+                  {employees.length}
+                </div>
+                <div className="small">Active Employees</div>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Details Modal --- */}
+      {detailModalOpen && (
+        <div className="detail-modal-overlay" onClick={() => setDetailModalOpen(false)}>
+          <div className="detail-modal-card" onClick={e => e.stopPropagation()}>
+            <div className="detail-header">
+              <h3 style={{ margin: 0, color: 'var(--red)' }}>{detailTitle}</h3>
+              <button className="btn ghost" onClick={() => setDetailModalOpen(false)} style={{padding:'4px 8px'}}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="detail-list">
+              {detailLoading ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Loading details...</p>
+              ) : detailList.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No employees found in this category.</p>
+              ) : (
+                detailList.map((emp, idx) => (
+                  <div key={emp._id || idx} className="detail-item">
+                    <div className="detail-avatar">
+                      {emp.name ? emp.name.charAt(0).toUpperCase() : "?"}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{emp.name || "Unknown"}</div>
+                      <div className="small">{emp.email || emp.position || "Employee"}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- INNER PAGES --- */}
+
+      {/* 1. EMPLOYEES */}
       {view === "employees" && (
         <>
           <div className="card admin-buttons" style={{ marginTop: "12px" }}>
-            <button
-              className={`btn ${subView === "add" ? "" : "ghost"}`}
-              onClick={() => setSubView("add")}
-            >
-              Add Employee
-            </button>
-
             <button
               className={`btn ${subView === "list" ? "" : "ghost"}`}
               onClick={() => setSubView("list")}
             >
               Employee List
             </button>
+            <button
+              className={`btn ${subView === "add" ? "" : "ghost"}`}
+              onClick={() => setSubView("add")}
+            >
+              Add New Employee
+            </button>
           </div>
 
-          {subView === "add" && (
-            <div style={{ marginTop: "16px" }}>
+          <div style={{ marginTop: "16px" }}>
+            {subView === "add" ? (
               <EmployeeForm onAdd={addEmployee} />
-            </div>
-          )}
-
-          {subView === "list" && (
-            <div style={{ marginTop: "16px" }}>
-              {loading ? (
-                <div className="card">Loading employees...</div>
-              ) : employees.length === 0 ? (
-                <div className="card" style={{ textAlign: "center" }}>
-                  No employees found
-                </div>
-              ) : (
-                <EmployeeList employees={employees} onDelete={deleteEmployee} />
-              )}
-            </div>
-          )}
+            ) : loading ? (
+              <div className="card">Loading...</div>
+            ) : (
+              <EmployeeList employees={employees} onDelete={deleteEmployee} />
+            )}
+          </div>
         </>
       )}
 
-      {/* LEAVES */}
+      {/* 2. LEAVES */}
       {view === "leaves" && (
         <div style={{ marginTop: "16px" }}>
           <AdminLeavePage token={token} api={api} />
         </div>
       )}
 
-      {/* ATTENDANCE */}
+      {/* 3. ATTENDANCE */}
       {view === "attendance" && (
         <div style={{ marginTop: "16px" }}>
           <AdminAttendancePage token={token} api={api} />
         </div>
       )}
 
-      {/* MANAGER SECTION */}
+      {/* 4. MANAGERS */}
       {view === "manager" && (
         <div style={{ marginTop: "16px" }}>
           <RegisterManager token={token} api={api} />
         </div>
       )}
 
-      {/* ATTENDANCE SUMMARY */}
+      {/* 5. SUMMARY */}
       {view === "summary" && (
         <div style={{ marginTop: "16px" }}>
           <AdminAttendanceSummary token={token} api={api} />

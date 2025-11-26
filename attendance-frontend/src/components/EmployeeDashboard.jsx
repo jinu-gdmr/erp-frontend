@@ -1,21 +1,39 @@
 import React, { useEffect, useState, useRef } from "react";
+import {
+  FaCamera,
+  FaSignOutAlt,
+  FaCalendarPlus,
+  FaCalendarCheck,
+  FaHistory,
+  FaArrowLeft,
+  FaCheckCircle,
+  FaHourglassHalf,
+  FaTimesCircle
+} from "react-icons/fa";
 
 export default function EmployeeDashboard({ token, api }) {
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  const [view, setView] = useState("dashboard"); // 'dashboard', 'apply-leave', 'my-leaves', 'attendance-log'
+  
+  // Leave Form State
   const [reason, setReason] = useState("");
   const [date, setDate] = useState("");
   const [type, setType] = useState("full");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Camera handling
+  // Camera State
   const [cameraOpen, setCameraOpen] = useState(false);
   const [actionType, setActionType] = useState(null); // "checkin" or "checkout"
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Load attendance and leaves
+  // Derived Stats
+  const pendingLeaves = leaves.filter(l => l.status === 'Pending').length;
+  const approvedLeaves = leaves.filter(l => l.status === 'Approved').length;
+  const rejectedLeaves = leaves.filter(l => l.status === 'Rejected').length;
+
   async function load() {
     setLoading(true);
     try {
@@ -34,7 +52,7 @@ export default function EmployeeDashboard({ token, api }) {
     load();
   }, []);
 
-  // -------------- CAMERA SECTION --------------
+  // -------------- CAMERA HANDLERS --------------
   async function openCamera(type) {
     setActionType(type);
     setCameraOpen(true);
@@ -43,12 +61,15 @@ export default function EmployeeDashboard({ token, api }) {
       if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
       alert("Camera access denied or unavailable.");
+      setCameraOpen(false);
     }
   }
 
   function capturePhoto() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    
     const context = canvas.getContext("2d");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -79,7 +100,7 @@ export default function EmployeeDashboard({ token, api }) {
     }
   }
 
-  // -------------- LEAVE APPLY --------------
+  // -------------- LEAVE FORM HANDLER --------------
   async function applyLeave(e) {
     e.preventDefault();
     try {
@@ -89,186 +110,276 @@ export default function EmployeeDashboard({ token, api }) {
       setFile(null);
       await load();
       alert("Leave applied successfully!");
+      setView("my-leaves"); // Redirect to list after apply
     } catch (err) {
       alert("Error applying leave: " + (err.message || ""));
     }
   }
 
+  // -------------- SUB-COMPONENTS --------------
+  const QuickLaunchItem = ({ icon, label, onClick, color = "var(--red)" }) => (
+    <div className="quick-launch-item" onClick={onClick}>
+      <div className="quick-launch-icon" style={{ color: color }}>{icon}</div>
+      <div className="quick-launch-label">{label}</div>
+    </div>
+  );
+
+  const StatItem = ({ icon, label, count, colorClass }) => (
+    <div className="stat-row">
+      <div className={`stat-icon-box ${colorClass}`}>{icon}</div>
+      <div className="stat-info">
+        <span className="stat-count">{count}</span>
+        <span className="stat-label">{label}</span>
+      </div>
+    </div>
+  );
+
+  // -------------- MAIN RENDER --------------
   return (
     <div>
-      {/*  Attendance Section */}
-      <div className="card">
-        <h3 style={{ color: "#b91c1c" }}>Attendance</h3>
-
-        <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
-          <button className="btn" onClick={() => openCamera("checkin")}>
-            Check-In 📸
-          </button>
-          <button className="btn ghost" onClick={() => openCamera("checkout")}>
-            Check-Out 📸
-          </button>
+      {/* HEADER */}
+      {view === "dashboard" ? (
+        <div className="dashboard-header-card card">
+          <h2 style={{ color: "var(--red)", margin: 0 }}>My Dashboard</h2>
+          <p className="small">Manage your attendance and leaves</p>
         </div>
+      ) : (
+        <div className="dashboard-header-card card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button className="btn ghost" onClick={() => setView("dashboard")} style={{padding: '8px 12px'}}>
+            <FaArrowLeft /> Back
+          </button>
+          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>
+            {view.replace("-", " ")}
+          </h3>
+        </div>
+      )}
 
-        {/* Camera Modal */}
-        {cameraOpen && (
-          <div className="camera-modal">
-            <div className="camera-box">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                style={{ width: "100%", borderRadius: "8px" }}
-              ></video>
-              <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
-              <div style={{ marginTop: 10, textAlign: "center" }}>
-                <button className="btn" onClick={capturePhoto}>
-                  Capture & Submit
-                </button>
-                <button className="btn ghost" onClick={closeCamera}>
-                  Cancel
-                </button>
-              </div>
+      {/* DASHBOARD WIDGETS */}
+      {view === "dashboard" && (
+        <div className="dashboard-grid-container">
+          
+          {/* Widget 1: Quick Actions */}
+          <div className="card dashboard-widget">
+            <h4 className="widget-title">Quick Actions</h4>
+            <div className="quick-launch-grid">
+              <QuickLaunchItem 
+                icon={<FaCamera />} 
+                label="Check In" 
+                onClick={() => openCamera("checkin")}
+                color="green"
+              />
+              <QuickLaunchItem 
+                icon={<FaSignOutAlt />} 
+                label="Check Out" 
+                onClick={() => openCamera("checkout")}
+                color="#b91c1c"
+              />
+              <QuickLaunchItem 
+                icon={<FaCalendarPlus />} 
+                label="Apply Leave" 
+                onClick={() => setView("apply-leave")}
+              />
+              <QuickLaunchItem 
+                icon={<FaCalendarCheck />} 
+                label="My Leaves" 
+                onClick={() => setView("my-leaves")}
+              />
+              <QuickLaunchItem 
+                icon={<FaHistory />} 
+                label="Attendance Log" 
+                onClick={() => setView("attendance-log")}
+              />
             </div>
           </div>
-        )}
 
-        {loading ? (
-          <div>Loading attendance...</div>
-        ) : (
-          <table className="table" style={{ marginTop: 10 }}>
+          {/* Widget 2: Leave Stats */}
+          <div className="card dashboard-widget">
+            <h4 className="widget-title">My Leave Stats</h4>
+            <div className="stats-list">
+              <StatItem 
+                icon={<FaHourglassHalf />} 
+                label="Pending Requests" 
+                count={pendingLeaves} 
+                colorClass="text-orange" 
+              />
+              <StatItem 
+                icon={<FaCheckCircle />} 
+                label="Approved Leaves" 
+                count={approvedLeaves} 
+                colorClass="text-green" 
+              />
+              <StatItem 
+                icon={<FaTimesCircle />} 
+                label="Rejected Leaves" 
+                count={rejectedLeaves} 
+                colorClass="text-red" 
+              />
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* CAMERA MODAL (Available globally) */}
+      {cameraOpen && (
+        <div className="camera-modal">
+          <div className="camera-box">
+            <h4 style={{marginBottom: 10, color: '#333'}}>
+              {actionType === 'checkin' ? 'Check In' : 'Check Out'}
+            </h4>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              style={{ width: "100%", borderRadius: "8px", background:'#000' }}
+            ></video>
+            <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
+            <div style={{ marginTop: 15, display:'flex', justifyContent:'center', gap: 10 }}>
+              <button className="btn" onClick={capturePhoto}>
+                Capture & Submit
+              </button>
+              <button className="btn ghost" onClick={closeCamera}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- INNER VIEWS --- */}
+
+      {/* 1. APPLY LEAVE */}
+      {view === "apply-leave" && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <form onSubmit={applyLeave}>
+            <div className="form-row">
+              <div style={{flex:1}}>
+                <label>Date</label>
+                <input
+                  className="input"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={{flex:1}}>
+                <label>Type</label>
+                <select
+                  className="input"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  <option value="full">Full-day</option>
+                  <option value="half">Half-day</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Reason</label>
+            <textarea
+              className="input"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              required
+              placeholder="Why are you taking leave?"
+            />
+
+            <label>Attachment (optional)</label>
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="input"
+              style={{padding: 8}}
+            />
+
+            <div style={{ marginTop: 15, display:'flex', justifyContent:'flex-end' }}>
+              <button className="btn" type="submit">Submit Request</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 2. MY LEAVES */}
+      {view === "my-leaves" && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <table className="table">
             <thead>
               <tr>
+                <th>Date</th>
                 <th>Type</th>
-                <th>Date / Time</th>
-                <th>Photo</th>
+                <th>Status</th>
+                <th>Attachment</th>
               </tr>
             </thead>
             <tbody>
-              {attendance.length === 0 ? (
-                <tr>
-                  <td colSpan="3">No attendance records yet.</td>
-                </tr>
+              {leaves.length === 0 ? (
+                <tr><td colSpan="4">No leaves applied yet.</td></tr>
               ) : (
-                attendance.map((a) => (
-                  <tr key={a._id}>
-                    <td
-                      style={{
-                        color: a.type === "checkin" ? "green" : "#b91c1c",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {a.type}
-                    </td>
-                    <td>{new Date(a.time).toLocaleString()}</td>
+                leaves.map((l) => (
+                  <tr key={l._id}>
+                    <td>{l.date}</td>
+                    <td>{l.type}</td>
                     <td>
-                      {a.photo_url ? (
-                        <a
-                          href={`http://localhost:5000${a.photo_url}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          View Photo
+                      <span style={{
+                        color: l.status === 'Approved' ? 'green' : l.status === 'Rejected' ? 'red' : 'orange',
+                        fontWeight: 600
+                      }}>
+                        {l.status}
+                      </span>
+                    </td>
+                    <td>
+                      {l.attachment_url ? (
+                        <a href={`http://localhost:5000${l.attachment_url}`} target="_blank" rel="noreferrer">
+                          View
                         </a>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "-"}
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/*  Leave Apply Section */}
-      <div className="card" style={{ marginTop: 20 }}>
-        <h3 style={{ color: "#b91c1c" }}>Apply Leave</h3>
-        <form onSubmit={applyLeave}>
-          <label>Date</label>
-          <input
-            className="input"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-
-          <label>Type</label>
-          <select
-            className="input"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
-            <option value="full">Full-day</option>
-            <option value="half">Half-day</option>
-          </select>
-
-          <label>Reason</label>
-          <textarea
-            className="input"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)} required
-          />
-
-          <label>Attachment (optional)</label>
-          <input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            onChange={(e) => setFile(e.target.files[0])}
-            className="input"
-          />
-
-          <div style={{ marginTop: 10 }}>
-            <button className="btn" type="submit">
-              Apply Leave
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/*  Leave History Section */}
-      <div className="card" style={{ marginTop: 20 }}>
-        <h3 style={{ color: "#b91c1c" }}>My Leaves</h3>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Attachment</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaves.length === 0 ? (
-              <tr>
-                <td colSpan="4">No leaves applied yet.</td>
-              </tr>
-            ) : (
-              leaves.map((l) => (
-                <tr key={l._id}>
-                  <td>{l.date}</td>
-                  <td>{l.type}</td>
-                  <td>{l.status}</td>
-                  <td>
-                    {l.attachment_url ? (
-                      <a
-                        href={`http://localhost:5000${l.attachment_url}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        View
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
+      {/* 3. ATTENDANCE LOG */}
+      {view === "attendance-log" && (
+        <div className="card" style={{ marginTop: 16 }}>
+           {loading ? <p>Loading...</p> : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Date / Time</th>
+                  <th>Photo</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {attendance.length === 0 ? (
+                  <tr><td colSpan="3">No attendance records yet.</td></tr>
+                ) : (
+                  attendance.map((a) => (
+                    <tr key={a._id}>
+                      <td style={{ color: a.type === "checkin" ? "green" : "#b91c1c", fontWeight: 600 }}>
+                        {a.type === 'checkin' ? 'Check In' : 'Check Out'}
+                      </td>
+                      <td>{new Date(a.time).toLocaleString()}</td>
+                      <td>
+                        {a.photo_url ? (
+                          <a href={`http://localhost:5000${a.photo_url}`} target="_blank" rel="noreferrer">View Photo</a>
+                        ) : "-"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+           )}
+        </div>
+      )}
+
     </div>
   );
 }
