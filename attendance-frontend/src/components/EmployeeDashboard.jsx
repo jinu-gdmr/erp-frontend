@@ -8,13 +8,14 @@ import {
   FaArrowLeft,
   FaCheckCircle,
   FaHourglassHalf,
-  FaTimesCircle
+  FaTimesCircle,
+  FaTimes
 } from "react-icons/fa";
 
 export default function EmployeeDashboard({ token, api }) {
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
-  const [view, setView] = useState("dashboard"); // 'dashboard', 'apply-leave', 'my-leaves', 'attendance-log'
+  const [view, setView] = useState("dashboard"); 
   
   // Leave Form State
   const [reason, setReason] = useState("");
@@ -25,14 +26,19 @@ export default function EmployeeDashboard({ token, api }) {
 
   // Camera State
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [actionType, setActionType] = useState(null); // "checkin" or "checkout"
+  const [actionType, setActionType] = useState(null); 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // --- Modal State for Leave Details ---
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalList, setModalList] = useState([]);
+
   // Derived Stats
-  const pendingLeaves = leaves.filter(l => l.status === 'Pending').length;
-  const approvedLeaves = leaves.filter(l => l.status === 'Approved').length;
-  const rejectedLeaves = leaves.filter(l => l.status === 'Rejected').length;
+  const pendingLeaves = leaves.filter(l => l.status === 'Pending');
+  const approvedLeaves = leaves.filter(l => l.status === 'Approved');
+  const rejectedLeaves = leaves.filter(l => l.status === 'Rejected');
 
   async function load() {
     setLoading(true);
@@ -110,10 +116,17 @@ export default function EmployeeDashboard({ token, api }) {
       setFile(null);
       await load();
       alert("Leave applied successfully!");
-      setView("my-leaves"); // Redirect to list after apply
+      setView("my-leaves"); 
     } catch (err) {
       alert("Error applying leave: " + (err.message || ""));
     }
+  }
+
+  // -------------- STAT CLICK HANDLER --------------
+  function handleStatClick(title, list) {
+    setModalTitle(title);
+    setModalList(list);
+    setLeaveModalOpen(true);
   }
 
   // -------------- SUB-COMPONENTS --------------
@@ -124,8 +137,12 @@ export default function EmployeeDashboard({ token, api }) {
     </div>
   );
 
-  const StatItem = ({ icon, label, count, colorClass }) => (
-    <div className="stat-row">
+  const StatItem = ({ icon, label, count, colorClass, onClick }) => (
+    <div 
+      className="stat-row clickable-stat" 
+      onClick={onClick}
+      title="Click to view details"
+    >
       <div className={`stat-icon-box ${colorClass}`}>{icon}</div>
       <div className="stat-info">
         <span className="stat-count">{count}</span>
@@ -137,6 +154,47 @@ export default function EmployeeDashboard({ token, api }) {
   // -------------- MAIN RENDER --------------
   return (
     <div>
+      {/* ---------------- CSS Styles ---------------- */}
+      <style>{`
+        .clickable-stat {
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .clickable-stat:hover {
+          transform: translateX(4px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          background: #fff;
+          border-color: #e5e5e5;
+        }
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.5); z-index: 3000;
+          display: flex; justify-content: center; align-items: center;
+          animation: fadeIn 0.2s;
+        }
+        .modal-card {
+          background: white; width: 400px; max-width: 90%;
+          border-radius: 12px; padding: 20px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          display: flex; flex-direction: column; max-height: 80vh;
+        }
+        .modal-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+        }
+        .modal-list {
+          overflow-y: auto; flex: 1;
+        }
+        .modal-item {
+          padding: 10px; border-bottom: 1px solid #f9f9f9;
+          display: flex; flex-direction: column; gap: 4px;
+        }
+        .modal-item:last-child { border-bottom: none; }
+        .item-date { font-weight: 600; color: #333; }
+        .item-reason { font-size: 13px; color: #666; font-style: italic; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
+
       {/* HEADER */}
       {view === "dashboard" ? (
         <div className="dashboard-header-card card">
@@ -199,24 +257,67 @@ export default function EmployeeDashboard({ token, api }) {
               <StatItem 
                 icon={<FaHourglassHalf />} 
                 label="Pending Requests" 
-                count={pendingLeaves} 
+                count={pendingLeaves.length} 
                 colorClass="text-orange" 
+                onClick={() => handleStatClick("Pending Requests", pendingLeaves)}
               />
               <StatItem 
                 icon={<FaCheckCircle />} 
                 label="Approved Leaves" 
-                count={approvedLeaves} 
+                count={approvedLeaves.length} 
                 colorClass="text-green" 
+                onClick={() => handleStatClick("Approved Leaves", approvedLeaves)}
               />
               <StatItem 
                 icon={<FaTimesCircle />} 
                 label="Rejected Leaves" 
-                count={rejectedLeaves} 
+                count={rejectedLeaves.length} 
                 colorClass="text-red" 
+                onClick={() => handleStatClick("Rejected Leaves", rejectedLeaves)}
               />
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* --- LEAVE DETAILS MODAL --- */}
+      {leaveModalOpen && (
+        <div className="modal-overlay" onClick={() => setLeaveModalOpen(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0, color: 'var(--red)' }}>{modalTitle}</h3>
+              <button className="btn ghost" onClick={() => setLeaveModalOpen(false)} style={{padding:'4px 8px'}}>
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="modal-list">
+              {modalList.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No records found.</p>
+              ) : (
+                modalList.map((l) => (
+                  <div key={l._id} className="modal-item">
+                    <div style={{display:'flex', justifyContent:'space-between'}}>
+                        <span className="item-date">{l.date}</span>
+                        <span className="small" style={{background:'#eee', padding:'2px 6px', borderRadius:4}}>{l.type}</span>
+                    </div>
+                    <div className="item-reason">"{l.reason || "No reason provided"}"</div>
+                    {l.attachment_url && (
+                        <a 
+                            href={`http://localhost:5000${l.attachment_url}`} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            style={{fontSize:12, color:'blue', textDecoration:'none'}}
+                        >
+                            View Attachment
+                        </a>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
 
