@@ -45,7 +45,7 @@ export default function AdminLeavePage({ token, api }) {
                 <th>Employee</th>
                 <th>Date</th>
                 <th>Reason</th>
-                <th>Manager Statuss</th>
+                <th>Manager Status</th>
                 <th>HR Status</th>
                 <th>Actions</th>
               </tr>
