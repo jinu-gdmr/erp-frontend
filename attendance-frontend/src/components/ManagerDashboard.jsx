@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import AdminLeavePage from "./AdminLeavePage";
+import HolidayCalendar from "./HolidayCalendar"; // ✅ Import
 import {
   FaCamera,
   FaSignOutAlt,
@@ -10,11 +11,11 @@ import {
   FaCheckCircle,
   FaHourglassHalf,
   FaTimesCircle,
-  FaTasks,
   FaUserCheck,
   FaTimes,
   FaCloudUploadAlt,
-  FaFileAlt
+  FaFileAlt,
+  FaCalendarAlt // ✅ Import Icon
 } from "react-icons/fa";
 
 export default function ManagerDashboard({ token, api }) {
@@ -167,6 +168,50 @@ export default function ManagerDashboard({ token, api }) {
     <div>
       {/* ---------------- CSS Styles (Same as Admin/Employee) ---------------- */}
       <style>{`
+        /* Form Inputs */
+        .modern-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.2s;
+          background: #fff;
+          color: #333;
+        }
+        .modern-input:focus {
+          border-color: #b91c1c;
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+        }
+        .modern-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #555;
+          margin-bottom: 6px;
+          display: block;
+        }
+
+        /* File Upload */
+        .file-upload-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          border: 2px dashed #ddd;
+          border-radius: 8px;
+          background: #fafafa;
+          color: #666;
+          cursor: pointer;
+          transition: all 0.2s;
+          gap: 10px;
+        }
+        .file-upload-label:hover {
+          border-color: #b91c1c;
+          background: #fff5f5;
+          color: #b91c1c;
+        }
+
         .clickable-stat { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .clickable-stat:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
@@ -242,6 +287,13 @@ export default function ManagerDashboard({ token, api }) {
                 label="My Logs" 
                 onClick={() => setView("attendance-log")}
               />
+
+              {/* ✅ ADDED HOLIDAY CALENDAR BUTTON */}
+              <QuickLaunchItem 
+                icon={<FaCalendarAlt />} 
+                label="Holidays" 
+                onClick={() => setView("holidays")} 
+              />
             </div>
           </div>
 
@@ -280,12 +332,11 @@ export default function ManagerDashboard({ token, api }) {
       {/* 1. TEAM LEAVES (Manager Approval) */}
       {view === "team-leaves" && (
         <div style={{ marginTop: 16 }}>
-          {/* Reusing AdminLeavePage but functionality adapts based on role (Manager) */}
           <AdminLeavePage token={token} api={api} />
         </div>
       )}
 
-      {/* 2. APPLY LEAVE (Personal) */}
+      {/* 2. APPLY LEAVE (Personal) - STYLED NOW */}
       {view === "apply-leave" && (
         <div className="card" style={{ marginTop: 16 }}>
           <form onSubmit={applyLeave}>
@@ -314,14 +365,14 @@ export default function ManagerDashboard({ token, api }) {
             </div>
 
             <div style={{marginTop: 15}}>
-              <label className="modern-label">Reason</label>
+              <label className="modern-label">Reason for Leave</label>
               <textarea
                 className="modern-input"
                 style={{minHeight: "100px", resize: "vertical"}}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 required
-                placeholder="Reason for leave..."
+                placeholder="Please explain the reason..."
               />
             </div>
 
@@ -329,7 +380,7 @@ export default function ManagerDashboard({ token, api }) {
               <label className="modern-label">Attachment (Optional)</label>
               <label className="file-upload-label">
                 <FaCloudUploadAlt size={24} />
-                <span>{file ? file.name : "Click to upload"}</span>
+                <span>{file ? file.name : "Click to upload a document"}</span>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
@@ -417,6 +468,13 @@ export default function ManagerDashboard({ token, api }) {
               </tbody>
             </table>
            )}
+        </div>
+      )}
+
+      {/* ✅ 5. HOLIDAYS */}
+      {view === "holidays" && (
+        <div style={{ marginTop: "16px" }}>
+          <HolidayCalendar />
         </div>
       )}
 

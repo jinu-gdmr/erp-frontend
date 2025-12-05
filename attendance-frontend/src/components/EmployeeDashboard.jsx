@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import HolidayCalendar from "./HolidayCalendar"; // ✅ Import
 import {
   FaCamera,
   FaSignOutAlt,
@@ -11,7 +12,8 @@ import {
   FaTimesCircle,
   FaTimes,
   FaCloudUploadAlt,
-  FaFileAlt
+  FaFileAlt,
+  FaCalendarAlt // ✅ Import Icon
 } from "react-icons/fa";
 
 export default function EmployeeDashboard({ token, api }) {
@@ -303,6 +305,12 @@ export default function EmployeeDashboard({ token, api }) {
                 label="Attendance Log" 
                 onClick={() => setView("attendance-log")}
               />
+              {/* ✅ Added Holiday Calendar Button */}
+              <QuickLaunchItem 
+                icon={<FaCalendarAlt />} 
+                label="Holidays" 
+                onClick={() => setView("holidays")} 
+              />
             </div>
           </div>
 
@@ -401,7 +409,7 @@ export default function EmployeeDashboard({ token, api }) {
         </div>
       )}
 
-      {/* 2. MY LEAVES (UPDATED WITH APPROVAL STATUSES) */}
+      {/* 2. MY LEAVES */}
       {view === "my-leaves" && (
         <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
           <div style={{overflowX: 'auto'}}>
@@ -512,7 +520,14 @@ export default function EmployeeDashboard({ token, api }) {
         </div>
       )}
 
-      {/* --- LEAVE DETAILS MODAL (UPDATED WITH APPROVAL STATUSES) --- */}
+      {/* ✅ 4. HOLIDAYS */}
+      {view === "holidays" && (
+        <div style={{ marginTop: "16px" }}>
+          <HolidayCalendar />
+        </div>
+      )}
+
+      {/* --- LEAVE DETAILS MODAL --- */}
       {leaveModalOpen && (
         <div className="modal-overlay" onClick={() => setLeaveModalOpen(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>

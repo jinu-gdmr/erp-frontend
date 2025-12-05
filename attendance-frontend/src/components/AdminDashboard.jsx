@@ -5,11 +5,12 @@ import AdminLeavePage from "./AdminLeavePage";
 import AdminAttendancePage from "./AdminAttendancePage";
 import RegisterManager from "./RegisterManager";
 import AdminAttendanceSummary from "./AdminAttendanceSummary";
+import HolidayCalendar from "./HolidayCalendar"; // Import Component
 import {
   FaUserPlus,
   FaUsers,
   FaCalendarCheck,
-  FaClock, // Re-imported FaClock
+  FaClock, 
   FaChartPie,
   FaUserTie,
   FaArrowLeft,
@@ -17,7 +18,8 @@ import {
   FaTimesCircle,
   FaUserClock,
   FaUserSlash,
-  FaTimes
+  FaTimes,
+  FaCalendarAlt // Import Icon
 } from "react-icons/fa";
 
 export default function AdminDashboard({ token, api }) {
@@ -190,10 +192,10 @@ export default function AdminDashboard({ token, api }) {
         </div>
       ) : (
         <div className="dashboard-header-card card" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button className="btn ghost" onClick={() => setView("dashboard")} style={{padding: '8px 12px'}}>
+          <button className="btn ghost" onClick={() => setView("dashboard")} style={{padding: '8px 12px', display:'flex', alignItems:'center', gap:6}}>
             <FaArrowLeft /> Back
           </button>
-          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>{view} Management</h3>
+          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>{view.replace("-", " ")}</h3>
         </div>
       )}
 
@@ -269,6 +271,13 @@ export default function AdminDashboard({ token, api }) {
                 icon={<FaChartPie />} 
                 label="Reports" 
                 onClick={() => setView("summary")} 
+              />
+              
+              {/* ✅ ADDED HOLIDAY CALENDAR BUTTON */}
+              <QuickLaunchItem 
+                icon={<FaCalendarAlt />} 
+                label="Holidays" 
+                onClick={() => setView("holidays")} 
               />
             </div>
           </div>
@@ -377,6 +386,13 @@ export default function AdminDashboard({ token, api }) {
       {view === "summary" && (
         <div style={{ marginTop: "16px" }}>
           <AdminAttendanceSummary token={token} api={api} />
+        </div>
+      )}
+
+      {/* ✅ 6. HOLIDAYS */}
+      {view === "holidays" && (
+        <div style={{ marginTop: "16px" }}>
+          <HolidayCalendar />
         </div>
       )}
     </div>
