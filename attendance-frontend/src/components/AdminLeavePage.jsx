@@ -34,6 +34,9 @@ export default function AdminLeavePage({ token, api }) {
     }
   }
 
+  // Helper to safely get lowercase status for CSS class
+  const getStatusClass = (status) => (status ? status.toLowerCase() : "pending");
+
   return (
     <div className="card" style={{ padding: 0, border: "none", boxShadow: "none" }}>
       <div style={{ padding: "20px 20px 10px", borderBottom: "1px solid #f0f0f0" }}>
@@ -55,13 +58,12 @@ export default function AdminLeavePage({ token, api }) {
           <table className="styled-table">
             <thead>
               <tr>
-                <th>Employee Name</th>
+                <th>Employee</th>
                 <th>Date</th>
-                <th>Type</th>
                 <th>Reason</th>
-                <th>Status</th>
-                <th>Applied On</th>
-                <th>Attachment</th>
+                <th>Manager Status</th>
+                <th>HR Status</th>
+                <th>Overall</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -70,52 +72,63 @@ export default function AdminLeavePage({ token, api }) {
                 <tr key={l._id}>
                   <td>
                     <div style={{ fontWeight: 600, color: "#333" }}>{l.employee_name}</div>
+                    <div className="small" style={{ textTransform: "capitalize" }}>{l.type}</div>
                   </td>
                   <td style={{ fontSize: "13px" }}>{l.date}</td>
-                  <td style={{ textTransform: "capitalize", fontSize: "13px" }}>{l.type}</td>
                   <td style={{ fontSize: "13px", color: "#555", maxWidth: "200px" }}>
                     {l.reason || "-"}
+                    {l.attachment_url && (
+                      <div style={{ marginTop: "4px" }}>
+                        <a 
+                          href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ color: "var(--red)", fontSize: "12px", textDecoration: "underline" }}
+                        >
+                          View Attachment
+                        </a>
+                      </div>
+                    )}
                   </td>
+                  
+                  {/* Manager Status Column */}
                   <td>
-                    {/* Status Badge */}
-                    <span className={`status-badge ${l.status ? l.status.toLowerCase() : 'pending'}`}>
+                    <span className={`status-badge ${getStatusClass(l.manager_status)}`}>
+                      {l.manager_status || 'Pending'}
+                    </span>
+                  </td>
+
+                  {/* HR Status Column */}
+                  <td>
+                    <span className={`status-badge ${getStatusClass(l.admin_status)}`}>
+                      {l.admin_status || 'Pending'}
+                    </span>
+                  </td>
+
+                  {/* Overall Status Column */}
+                  <td>
+                    <span className={`status-badge ${getStatusClass(l.status)}`}>
                       {l.status || 'Pending'}
                     </span>
                   </td>
-                  <td style={{ fontSize: "12px", color: "#777" }}>
-                    {l.applied_at ? new Date(l.applied_at).toLocaleDateString() : "-"}
-                  </td>
+
+                  {/* Action Buttons based on Role */}
                   <td>
-                    {l.attachment_url ? (
-                      <a 
-                        href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        style={{ color: "var(--red)", fontSize: "13px", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}
-                      >
-                        View File
-                      </a>
-                    ) : <span style={{ color: "#ccc" }}>-</span>}
-                  </td>
-                  <td>
-                    {(role === "admin" || role === "manager") && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          className="btn-solid-green"
-                          style={{ padding: "6px 12px", fontSize: "12px" }}
-                          onClick={() => updateStatus(l._id, "Approved")}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="btn-solid-red"
-                          style={{ padding: "6px 12px", fontSize: "12px" }}
-                          onClick={() => updateStatus(l._id, "Rejected")}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {role === 'manager' && (
+                        <>
+                          <button className="btn-solid-green" onClick={() => updateStatus(l._id, "Approved")}>Approve</button>
+                          <button className="btn-solid-red" onClick={() => updateStatus(l._id, "Rejected")}>Reject</button>
+                        </>
+                      )}
+
+                      {role === 'admin' && (
+                        <>
+                          <button className="btn-solid-green" onClick={() => updateStatus(l._id, "Approved")}>Approve</button>
+                          <button className="btn-solid-red" onClick={() => updateStatus(l._id, "Rejected")}>Reject</button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
