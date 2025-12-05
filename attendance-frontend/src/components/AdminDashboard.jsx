@@ -9,6 +9,7 @@ import {
   FaUserPlus,
   FaUsers,
   FaCalendarCheck,
+  FaClock, // Re-imported FaClock
   FaChartPie,
   FaUserTie,
   FaArrowLeft,
@@ -86,39 +87,23 @@ export default function AdminDashboard({ token, api }) {
     setDetailList([]);
 
     try {
-      // 1. Get current month YYYY-MM
       const now = new Date();
-      const monthStr = now.toISOString().slice(0, 7); // "2023-10"
-      
-      // 2. Fetch detailed summary
+      const monthStr = now.toISOString().slice(0, 7); 
       const summaryData = await api.getAttendanceSummary(monthStr, token);
-      
-      // 3. Find today's date key (YYYY-MM-DD)
-      // We look for a date in the response that matches local "today" or relies on the latest entry
-      // For robustness, we construct "today" string matching the API format
       const todayStr = now.toISOString().slice(0, 10); 
-      
-      // 4. Extract the specific list (present, absent, etc.)
-      // The API returns days object: { "2023-10-27": { present: [...], absent: [...] } }
       const todayData = summaryData.days && summaryData.days[todayStr];
 
       if (todayData && todayData[type]) {
         const listData = todayData[type];
-        
-        // 5. Map IDs to Names if the API returns IDs, or use Objects if provided
-        // Assuming listData might be objects with _id/name OR just IDs
-        // We will match against our full 'employees' list to ensure we have names
         const enrichedList = listData.map(item => {
             const id = typeof item === 'object' ? item._id : item;
             const empDef = employees.find(e => e._id === id);
             return empDef || (typeof item === 'object' ? item : { name: "Unknown", _id: id });
         });
-        
         setDetailList(enrichedList);
       } else {
-        setDetailList([]); // No data found for today
+        setDetailList([]); 
       }
-
     } catch (err) {
       console.error("Error fetching details", err);
       alert("Could not load details.");
@@ -136,7 +121,6 @@ export default function AdminDashboard({ token, api }) {
     </div>
   );
 
-  // Updated StatItem to be clickable
   const StatItem = ({ icon, label, count, colorClass, onClick }) => (
     <div 
       className="stat-row clickable-stat" 
@@ -271,7 +255,11 @@ export default function AdminDashboard({ token, api }) {
                 label="Leave Requests" 
                 onClick={() => setView("leaves")} 
               />
-              
+              <QuickLaunchItem 
+                icon={<FaClock />} 
+                label="Attendance Logs" 
+                onClick={() => setView("attendance")} 
+              />
               <QuickLaunchItem 
                 icon={<FaUserTie />} 
                 label="Managers" 
