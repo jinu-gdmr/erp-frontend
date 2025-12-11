@@ -116,7 +116,7 @@ export default {
     return data;
   },
 
-
+  // REVISION 3: List Managers
   getManagers: async (token) => {
     const res = await fetch(`${API_BASE}/admin/managers`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -126,7 +126,15 @@ export default {
     return data;
   },
 
-  
+  // REVISION 6: Manager's Assigned Employees
+  getManagerEmployees: async (token) => {
+    const res = await fetch(`${API_BASE}/manager/my-employees`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok) throw data;
+    return data;
+  },
 
   deleteManager: async (id, token) => {
     const res = await fetch(`${API_BASE}/admin/managers/${id}`, {
@@ -138,4 +146,3 @@ export default {
     return data;
   },
 };
-

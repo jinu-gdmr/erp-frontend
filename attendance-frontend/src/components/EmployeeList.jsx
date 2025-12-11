@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function EmployeeList({ employees, onDelete, onSelect }) {
+export default function EmployeeList({ employees, onDelete, onSelect, onEdit }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -29,6 +29,8 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Department</th>
+              <th>Manager</th> {/* REVISION 3 */}
               <th>Actions</th>
             </tr>
           </thead>
@@ -50,6 +52,8 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
                   </button>
                 </td>
                 <td>{e.email}</td>
+                <td>{e.department || "-"}</td> {/* REVISION 3 */}
+                <td>{e.manager_name || "-"}</td> {/* REVISION 3 */}
                 <td>
                   <button
                     className="btn ghost"

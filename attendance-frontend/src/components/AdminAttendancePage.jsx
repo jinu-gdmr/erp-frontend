@@ -5,12 +5,17 @@ export default function AdminAttendancePage({ token, api }) {
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Helpers for Revision 4
+  const isLateCheckin = (a) => a.type === "checkin" && new Date(a.time).getHours() >= 9 && a.status_indicator === "Late";
+  const isEarlyCheckout = (a) => a.type === "checkout" && new Date(a.time).getHours() < 17 && a.status_indicator === "Early";
 
   // Load employees
   async function loadEmployees() {
     setLoading(true);
     try {
-      const list = await api.listEmployees(token);
+      // Employees now contain manager_name which is handled in the backend.
+      const list = await api.listEmployees(token); 
       setEmployees(list);
     } catch (err) {
       console.error("Error loading employees", err);
@@ -108,6 +113,7 @@ export default function AdminAttendancePage({ token, api }) {
                   <tr>
                     <th>Type</th>
                     <th>Date / Time</th>
+                    <th>Status</th>
                     <th>Photo</th>
                   </tr>
                 </thead>
@@ -124,6 +130,26 @@ export default function AdminAttendancePage({ token, api }) {
                         {a.type}
                       </td>
                       <td>{new Date(a.time).toLocaleString()}</td>
+                      
+                      {/* REVISION 4: Status Indicator */}
+                      <td>
+                        {a.status_indicator === "Late" && (
+                            <span className="attendance-indicator late">Late Check-in</span>
+                        )}
+                        {a.status_indicator === "Early" && (
+                            <span className="attendance-indicator early">Early Checkout</span>
+                        )}
+                        {a.status_indicator === "On Time" && (
+                            <span className="attendance-indicator on-time">On Time</span>
+                        )}
+                        {a.type === "absent" && (
+                            <span className="attendance-indicator leave">Absent</span>
+                        )}
+                         {a.type === "checkout" && !a.status_indicator && (
+                            <span className="attendance-indicator on-time">On Time</span>
+                        )}
+                      </td>
+                      
                       <td>
                         {a.photo_url ? (
                           <a

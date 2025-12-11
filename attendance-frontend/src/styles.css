@@ -219,6 +219,36 @@ label {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* REVISION 4: Attendance Status Indicators */
+.attendance-indicator {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.attendance-indicator.late {
+    background: #fef3c7; /* light orange/yellow */
+    color: #d97706; /* dark orange */
+}
+
+.attendance-indicator.early {
+    background: #fee2e2; /* light red */
+    color: #dc2626; /* dark red */
+}
+
+.attendance-indicator.on-time {
+    background: #dcfce7; /* light green */
+    color: #16a34a; /* dark green */
+}
+
+.attendance-indicator.leave {
+    background: #f8d7d7; /* light muted red (same as --muted) */
+    color: var(--red);
+}
+
 /* ---------------- Camera Modal ---------------- */
 .camera-modal {
   position: fixed;

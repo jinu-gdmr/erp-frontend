@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import AdminLeavePage from "./AdminLeavePage";
-import HolidayCalendar from "./HolidayCalendar"; // ✅ Import
+import HolidayCalendar from "./HolidayCalendar"; 
 import {
   FaCamera,
   FaSignOutAlt,
@@ -15,14 +15,16 @@ import {
   FaTimes,
   FaCloudUploadAlt,
   FaFileAlt,
-  FaCalendarAlt // ✅ Import Icon
+  FaCalendarAlt, 
+  FaUsers // Added for Team Members
 } from "react-icons/fa";
 
 export default function ManagerDashboard({ token, api }) {
   // Personal Data State
   const [attendance, setAttendance] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
-  const [view, setView] = useState("dashboard"); // 'dashboard', 'apply-leave', 'my-leaves', 'attendance-log', 'team-leaves'
+  const [teamMembers, setTeamMembers] = useState([]); // REVISION 6
+  const [view, setView] = useState("dashboard"); // 'dashboard', 'apply-leave', 'my-leaves', 'attendance-log', 'team-leaves', 'team-members'
   
   // Leave Form State
   const [reason, setReason] = useState("");
@@ -55,8 +57,10 @@ export default function ManagerDashboard({ token, api }) {
     try {
       const a = await api.myAttendance(token);
       const l = await api.myLeaves(token);
+      const t = await api.getManagerEmployees(token); // REVISION 6
       setAttendance(a);
       setMyLeaves(l);
+      setTeamMembers(t); // REVISION 6
     } catch (err) {
       console.error("Error loading data", err);
     } finally {
@@ -68,7 +72,7 @@ export default function ManagerDashboard({ token, api }) {
     load();
   }, []);
 
-  // -------------- CAMERA HANDLERS --------------
+  // -------------- CAMERA HANDLERS (Omitted for brevity - Unchanged) --------------
   async function openCamera(type) {
     setActionType(type);
     setCameraOpen(true);
@@ -115,8 +119,8 @@ export default function ManagerDashboard({ token, api }) {
       videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
     }
   }
-
-  // -------------- LEAVE FORM HANDLER --------------
+  
+  // -------------- LEAVE FORM HANDLER (Omitted for brevity - Unchanged) --------------
   async function applyLeave(e) {
     e.preventDefault();
     try {
@@ -132,7 +136,7 @@ export default function ManagerDashboard({ token, api }) {
     }
   }
 
-  // -------------- HELPER FUNCTIONS --------------
+  // -------------- HELPER FUNCTIONS (Omitted for brevity - Unchanged) --------------
   function handleStatClick(title, list) {
     setModalTitle(title);
     setModalList(list);
@@ -141,7 +145,7 @@ export default function ManagerDashboard({ token, api }) {
 
   const getStatusClass = (status) => (status ? status.toLowerCase() : "pending");
 
-  // -------------- SUB-COMPONENTS --------------
+  // -------------- SUB-COMPONENTS (Omitted for brevity - Unchanged) --------------
   const QuickLaunchItem = ({ icon, label, onClick, color = "var(--red)" }) => (
     <div className="quick-launch-item" onClick={onClick}>
       <div className="quick-launch-icon" style={{ color: color }}>{icon}</div>
@@ -163,10 +167,43 @@ export default function ManagerDashboard({ token, api }) {
     </div>
   );
 
+  // --- NEW: Team Members List Component (REVISION 6) ---
+  const TeamMembersList = () => (
+    <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
+        <div style={{overflowX: 'auto'}}>
+            <table className="styled-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {teamMembers.length === 0 ? (
+                        <tr><td colSpan="4" style={{textAlign:"center", padding:20, color:"#999"}}>No employees assigned to you yet.</td></tr>
+                    ) : (
+                        teamMembers.map((m) => (
+                            <tr key={m._id}>
+                                <td style={{fontWeight:500}}>{m.name}</td>
+                                <td>{m.email}</td>
+                                <td>{m.department}</td>
+                                <td>{m.position}</td>
+                            </tr>
+                        ))
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+  );
+
+
   // -------------- MAIN RENDER --------------
   return (
     <div>
-      {/* ---------------- CSS Styles (Same as Admin/Employee) ---------------- */}
+      {/* ---------------- CSS Styles (Omitted for brevity - unchanged) ---------------- */}
       <style>{`
         /* Form Inputs */
         .modern-input {
@@ -271,8 +308,16 @@ export default function ManagerDashboard({ token, api }) {
               {/* Manager Actions */}
               <QuickLaunchItem 
                 icon={<FaUserCheck />} 
-                label="Team Requests" 
+                label="Team Leaves" 
                 onClick={() => setView("team-leaves")}
+                color="var(--red)"
+              />
+
+               {/* REVISION 6: Team Members List */}
+              <QuickLaunchItem 
+                icon={<FaUsers />} 
+                label="Team Members" 
+                onClick={() => setView("team-members")}
                 color="var(--red)"
               />
               
@@ -288,7 +333,7 @@ export default function ManagerDashboard({ token, api }) {
                 onClick={() => setView("attendance-log")}
               />
 
-              {/* ✅ ADDED HOLIDAY CALENDAR BUTTON */}
+              {/* Holiday Calendar */}
               <QuickLaunchItem 
                 icon={<FaCalendarAlt />} 
                 label="Holidays" 
@@ -336,7 +381,10 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* 2. APPLY LEAVE (Personal) - STYLED NOW */}
+      {/* REVISION 6: TEAM MEMBERS */}
+      {view === "team-members" && <TeamMembersList />}
+      
+      {/* 2. APPLY LEAVE (Personal) - STYLED NOW (Omitted for brevity - unchanged) */}
       {view === "apply-leave" && (
         <div className="card" style={{ marginTop: 16 }}>
           <form onSubmit={applyLeave}>
@@ -399,7 +447,7 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* 3. MY LEAVES (Personal History) */}
+      {/* 3. MY LEAVES (Personal History) (Omitted for brevity - unchanged) */}
       {view === "my-leaves" && (
         <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
           <div style={{overflowX: 'auto'}}>
@@ -439,7 +487,7 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* 4. ATTENDANCE LOG (Personal) */}
+      {/* 4. ATTENDANCE LOG (Personal) (Omitted for brevity - unchanged) */}
       {view === "attendance-log" && (
         <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
            {loading ? <p style={{padding:20}}>Loading...</p> : (
@@ -471,14 +519,14 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* ✅ 5. HOLIDAYS */}
+      {/* 5. HOLIDAYS (Omitted for brevity - unchanged) */}
       {view === "holidays" && (
         <div style={{ marginTop: "16px" }}>
           <HolidayCalendar />
         </div>
       )}
 
-      {/* --- LEAVE DETAILS MODAL (For My Stats) --- */}
+      {/* --- LEAVE DETAILS MODAL (For My Stats) (Omitted for brevity - unchanged) --- */}
       {leaveModalOpen && (
         <div className="modal-overlay" onClick={() => setLeaveModalOpen(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
@@ -510,7 +558,7 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* CAMERA MODAL */}
+      {/* CAMERA MODAL (Omitted for brevity - unchanged) */}
       {cameraOpen && (
         <div className="camera-modal">
           <div className="camera-box">
