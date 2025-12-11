@@ -1,21 +1,46 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 
-export default function EmployeeForm({ onAdd }) {
+const departments = [
+  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations"
+];
+
+export default function EmployeeForm({ onAdd, api, token }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
+  const [department, setDepartment] = useState(departments[0]); // Default to first dept
   const [position, setPosition] = useState("");
+  const [managerId, setManagerId] = useState("");
+  const [managers, setManagers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+
+  async function loadManagers() {
+    try {
+      const list = await api.getManagers(token);
+      setManagers(list);
+    } catch (err) {
+      console.error("Failed to load managers", err);
+    }
+  }
+
+  useEffect(() => {
+    loadManagers();
+  }, []);
 
   async function handle(e) {
     e.preventDefault();
     setSaving(true);
     setMsg("");
     try {
-      await onAdd({ name, email, department, position });
-      setMsg("Employee added — password sent by email.");
-      setName(""); setEmail(""); setDepartment(""); setPosition("");
+      await onAdd({ 
+        name, 
+        email, 
+        department, 
+        position, 
+        manager_id: managerId || undefined // Pass null if empty string
+      });
+      setMsg("Employee added — credentials sent by email.");
+      setName(""); setEmail(""); setDepartment(departments[0]); setPosition(""); setManagerId("");
     } catch (err) {
       setMsg(err.message || "Error");
     } finally { setSaving(false); }
@@ -24,17 +49,40 @@ export default function EmployeeForm({ onAdd }) {
   return (
     <div className="card">
       <h3 style={{color:"#b91c1c"}}>Add Employee</h3>
-      {msg && <div className="small" style={{color:"#19e13aff"}}>{msg}</div>}
+      {msg && <div className="small" style={{color: msg.startsWith("Employee added") ? "green" : "red", fontWeight: 500}}>{msg}</div>}
       <br />
       <form onSubmit={handle}>
+        
+        {/* Row 1: Name and Email */}
         <div className="form-row">
           <input className="input" placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} required />
           <input className="input" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
         </div>
+        
+        {/* Row 2: Department and Position */}
         <div className="form-row">
-          <input className="input" placeholder="Department" value={department} onChange={e=>setDepartment(e.target.value)} />
+          <div>
+            <label>Department</label>
+            <select className="input" value={department} onChange={e=>setDepartment(e.target.value)} required>
+              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
           <input className="input" placeholder="Position" value={position} onChange={e=>setPosition(e.target.value)} />
         </div>
+        
+        {/* Row 3: Manager Assignment (Optional) */}
+        <div className="form-row">
+          <div style={{flex: 1}}>
+            <label>Assign Manager (Optional)</label>
+            <select className="input" value={managerId} onChange={e=>setManagerId(e.target.value)}>
+              <option value="">-- No Manager Assigned --</option>
+              {managers.map(m => (
+                <option key={m._id} value={m._id}>{m.name} ({m.department})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div style={{marginTop:10}}>
           <button className="btn" disabled={saving}>{saving ? "Adding..." : "Add employee"}</button>
         </div>
