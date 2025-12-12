@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from "react";
 
 const departments = [
-  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations"
+  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations","Administration"
 ];
 
 export default function EmployeeForm({ onAdd, api, token }) {
