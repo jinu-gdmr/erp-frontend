@@ -165,6 +165,8 @@ select {
   border: 1px solid #cc2c2c;
   flex: 1;
   font-size: 14px;
+  /* Fix height issue for input/select in flex row */
+  height: 42px; 
 }
 .input {
   width: 100%;
@@ -173,6 +175,7 @@ select {
 textarea {
   min-height: 90px;
   resize: vertical;
+  height: auto !important; /* Allow textarea to size naturally */
 }
 label {
   font-size: 13px;

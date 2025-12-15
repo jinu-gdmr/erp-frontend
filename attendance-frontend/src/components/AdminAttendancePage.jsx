@@ -1,20 +1,43 @@
 import React, { useEffect, useState } from "react";
 
+// Helper function to group records by date
+function groupAttendance(records) {
+  const groups = {};
+  records.forEach(rec => {
+    const date = rec.date;
+    if (!groups[date]) {
+      groups[date] = {
+        checkin: null,
+        checkout: null,
+        absent: null,
+      };
+    }
+    groups[date][rec.type] = rec;
+  });
+  
+  // Convert groups into an array of consolidated records, newest first
+  return Object.entries(groups)
+    .map(([date, records]) => ({
+      date,
+      checkin: records.checkin,
+      checkout: records.checkout,
+      absent: records.absent,
+      // Use latest timestamp for sorting (checkout > checkin > absent)
+      sortTime: new Date(records.checkout?.time || records.checkin?.time || records.absent?.time).getTime()
+    }))
+    .sort((a, b) => b.sortTime - a.sortTime); // Sort by newest activity date
+}
+
 export default function AdminAttendancePage({ token, api }) {
   const [employees, setEmployees] = useState([]);
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // Helpers for Revision 4
-  const isLateCheckin = (a) => a.type === "checkin" && new Date(a.time).getHours() >= 9 && a.status_indicator === "Late";
-  const isEarlyCheckout = (a) => a.type === "checkout" && new Date(a.time).getHours() < 17 && a.status_indicator === "Early";
-
   // Load employees
   async function loadEmployees() {
     setLoading(true);
     try {
-      // Employees now contain manager_name which is handled in the backend.
       const list = await api.listEmployees(token); 
       setEmployees(list);
     } catch (err) {
@@ -30,7 +53,8 @@ export default function AdminAttendancePage({ token, api }) {
     setLoading(true);
     try {
       const records = await api.employeeAttendance(emp._id, token);
-      setAttendance(records);
+      // NEW: Consolidate records for display
+      setAttendance(groupAttendance(records));
     } catch (err) {
       console.error("Error loading attendance", err);
     } finally {
@@ -41,6 +65,38 @@ export default function AdminAttendancePage({ token, api }) {
   useEffect(() => {
     loadEmployees();
   }, []);
+  
+  // Helper to display time
+  const formatTime = (timeStr) => {
+    if (!timeStr) return "-";
+    return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Helper for status badge
+  const getStatusDisplay = (rec) => {
+      if (rec.absent) {
+          return <span className="attendance-indicator leave">Absent</span>;
+      }
+      if (rec.checkin && rec.checkout) {
+          if (rec.checkin.status_indicator === "Late") {
+              return <span className="attendance-indicator late">Late Check-in</span>;
+          }
+          if (rec.checkout.status_indicator === "Early") {
+              return <span className="attendance-indicator early">Early Checkout</span>;
+          }
+          return <span className="attendance-indicator on-time">Full Day</span>;
+      }
+      if (rec.checkin) {
+           if (rec.checkin.day_type === "half-day") {
+                return <span className="attendance-indicator on-time">Half Day (In)</span>;
+           }
+           if (rec.checkin.status_indicator === "Late") {
+               return <span className="attendance-indicator late">Late Check-in</span>;
+           }
+           return <span className="attendance-indicator on-time">Checked In</span>;
+      }
+      return "-";
+  }
 
   return (
   <div className="card">
@@ -95,7 +151,7 @@ export default function AdminAttendancePage({ token, api }) {
         )}
       </div>
 
-      {/* ✅ RIGHT COLUMN: Attendance Details */}
+      {/* ✅ RIGHT COLUMN: Attendance Details (Consolidated View) */}
       <div className="col" style={{ flex: 2 }}>
         {selectedEmp ? (
           <>
@@ -111,57 +167,46 @@ export default function AdminAttendancePage({ token, api }) {
               <table className="table" style={{ marginTop: 10 }}>
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Date / Time</th>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
                     <th>Status</th>
-                    <th>Photo</th>
+                    <th>C/I Photo</th>
+                    <th>C/O Photo</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {attendance.map((a) => (
-                    <tr key={a._id}>
-                      <td
-                        style={{
-                          color:
-                            a.type === "checkin" ? "green" : "#b91c1c",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {a.type}
+                  {attendance.map((rec) => (
+                    <tr key={rec.date}>
+                      <td>{rec.date}</td>
+                      <td style={{ color: rec.checkin?.status_indicator === 'Late' ? '#d97706' : '#16a34a', fontWeight: 600 }}>
+                          {formatTime(rec.checkin?.time)}
                       </td>
-                      <td>{new Date(a.time).toLocaleString()}</td>
-                      
-                      {/* REVISION 4: Status Indicator */}
-                      <td>
-                        {a.status_indicator === "Late" && (
-                            <span className="attendance-indicator late">Late Check-in</span>
-                        )}
-                        {a.status_indicator === "Early" && (
-                            <span className="attendance-indicator early">Early Checkout</span>
-                        )}
-                        {a.status_indicator === "On Time" && (
-                            <span className="attendance-indicator on-time">On Time</span>
-                        )}
-                        {a.type === "absent" && (
-                            <span className="attendance-indicator leave">Absent</span>
-                        )}
-                         {a.type === "checkout" && !a.status_indicator && (
-                            <span className="attendance-indicator on-time">On Time</span>
-                        )}
+                      <td style={{ color: rec.checkout?.status_indicator === 'Early' ? '#dc2626' : '#333', fontWeight: 600 }}>
+                          {formatTime(rec.checkout?.time)}
                       </td>
-                      
+                      <td>{getStatusDisplay(rec)}</td>
                       <td>
-                        {a.photo_url ? (
+                        {rec.checkin?.photo_url ? (
                           <a
-                            href={`http://localhost:5000${a.photo_url}`}
+                            href={`http://localhost:5000${rec.checkin.photo_url}`}
                             target="_blank"
                             rel="noreferrer"
                           >
-                            View Photo
+                            View
                           </a>
-                        ) : (
-                          "-"
-                        )}
+                        ) : "-"}
+                      </td>
+                      <td>
+                        {rec.checkout?.photo_url ? (
+                          <a
+                            href={`http://localhost:5000${rec.checkout.photo_url}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View
+                          </a>
+                        ) : "-"}
                       </td>
                     </tr>
                   ))}

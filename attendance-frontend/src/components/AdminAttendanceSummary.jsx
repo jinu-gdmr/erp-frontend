@@ -1,4 +1,33 @@
 import React, { useEffect, useState } from "react";
+import { FaFileCsv, FaFilePdf } from "react-icons/fa";
+
+// Helper function to convert data to CSV format
+function convertToCSV(summary) {
+    let csv = 'Date,Present,Absent,On Leave,Not Checked-in\n';
+    
+    Object.entries(summary.days).forEach(([date, d]) => {
+        csv += `${date},${d.present.length},${d.absent.length},${d.leave.length},${d.not_checked_in.length}\n`;
+    });
+    
+    return csv;
+}
+
+// Helper function to convert data to PDF format (simplified text output)
+function convertToPDFText(summary, month) {
+  let text = `Monthly Attendance Summary: ${month}\n`;
+  text += `Total Employees: ${summary.total_employees}\n\n`;
+  text += '----------------------------------------------------------\n';
+  text += 'Date       | Present | Absent | On Leave | Not Checked-in\n';
+  text += '----------------------------------------------------------\n';
+  
+  Object.entries(summary.days).forEach(([date, d]) => {
+      text += `${date} | ${String(d.present.length).padEnd(7)} | ${String(d.absent.length).padEnd(6)} | ${String(d.leave.length).padEnd(8)} | ${d.not_checked_in.length}\n`;
+  });
+  text += '----------------------------------------------------------\n';
+  
+  return text;
+}
+
 
 export default function AdminAttendanceSummary({ token, api }) {
   const [month, setMonth] = useState(
@@ -14,6 +43,33 @@ export default function AdminAttendanceSummary({ token, api }) {
   useEffect(() => {
     loadSummary();
   }, [month]);
+  
+  // --- NEW: Export Handlers ---
+  function handleExport(format) {
+    if (!summary) return;
+
+    if (format === 'csv') {
+        const csvData = convertToCSV(summary);
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Attendance_Summary_${month}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else if (format === 'pdf') {
+        const pdfText = convertToPDFText(summary, month);
+        // Simplified PDF generation using window.print() for plain text output (requires user to choose 'Save as PDF')
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<pre>');
+        printWindow.document.write(pdfText);
+        printWindow.document.write('</pre>');
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+  }
 
   if (!summary) return <div className="card">Loading...</div>;
 
@@ -109,14 +165,34 @@ export default function AdminAttendanceSummary({ token, api }) {
       <div className="card">
         <h3 style={{ color: "#b91c1c" }}>Monthly Attendance Summary</h3>
 
-        {/* Month Selector */}
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="input"
-          style={{ width: "180px", marginBottom: "15px" }}
-        />
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+             {/* Month Selector */}
+            <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="input"
+            style={{ width: "180px" }}
+            />
+            
+            {/* NEW: Export Buttons */}
+            <div style={{display: 'flex', gap: '10px'}}>
+                <button 
+                    className="btn ghost" 
+                    onClick={() => handleExport('csv')}
+                    style={{padding: '8px 12px', display:'flex', alignItems:'center', gap: 5}}
+                >
+                    <FaFileCsv /> Export CSV
+                </button>
+                 <button 
+                    className="btn" 
+                    onClick={() => handleExport('pdf')}
+                    style={{padding: '8px 12px', display:'flex', alignItems:'center', gap: 5}}
+                >
+                    <FaFilePdf /> Export PDF
+                </button>
+            </div>
+        </div>
 
         <h4>Total Employees: {summary.total_employees}</h4>
 
