@@ -1,13 +1,13 @@
 import React, {useState, useEffect} from "react";
 
 const departments = [
-  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations","Administration"
+  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations"
 ];
 
 export default function EmployeeForm({ onAdd, api, token }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState(departments[0]); // Default to first dept
+  const [department, setDepartment] = useState(departments[0]); 
   const [position, setPosition] = useState("");
   const [managerId, setManagerId] = useState("");
   const [managers, setManagers] = useState([]);
@@ -16,6 +16,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
 
   async function loadManagers() {
     try {
+      // API call to fetch all registered managers (REVISION 3)
       const list = await api.getManagers(token);
       setManagers(list);
     } catch (err) {
@@ -37,7 +38,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
         email, 
         department, 
         position, 
-        manager_id: managerId || undefined // Pass null if empty string
+        manager_id: managerId || undefined 
       });
       setMsg("Employee added — credentials sent by email.");
       setName(""); setEmail(""); setDepartment(departments[0]); setPosition(""); setManagerId("");
@@ -59,15 +60,24 @@ export default function EmployeeForm({ onAdd, api, token }) {
           <input className="input" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
         </div>
         
-        {/* Row 2: Department and Position */}
+        {/* Row 2: Department and Position (Fixed layout) */}
         <div className="form-row">
-          <div>
+          <div style={{ flex: 1 }}>
             <label>Department</label>
             <select className="input" value={department} onChange={e=>setDepartment(e.target.value)} required>
               {departments.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <input className="input" placeholder="Position" value={position} onChange={e=>setPosition(e.target.value)} />
+          <div style={{ flex: 1 }}>
+            <label>Position</label>
+            {/* Position input now uses the .input class correctly, fixing height */}
+            <input 
+                className="input" 
+                placeholder="Position" 
+                value={position} 
+                onChange={e=>setPosition(e.target.value)} 
+            />
+          </div>
         </div>
         
         {/* Row 3: Manager Assignment (Optional) */}
