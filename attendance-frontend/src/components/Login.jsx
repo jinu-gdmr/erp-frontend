@@ -1,5 +1,6 @@
+// attendance-frontend/src/components/Login.jsx
 import React, { useState } from "react";
-import Logo from "../assets/GDMR-LOGO-unit.png"; // Import the logo
+import Logo from "../assets/GDMR-LOGO-unit.png"; 
 
 export default function Login({ onLogin, api }) {
   const [email, setEmail] = useState("");
@@ -7,6 +8,11 @@ export default function Login({ onLogin, api }) {
   const [err, setErr] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Forgot Password State
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMsg, setForgotMsg] = useState("");
 
   async function handle(e) {
     e.preventDefault();
@@ -21,12 +27,64 @@ export default function Login({ onLogin, api }) {
 
     try {
       const data = await api.login({ email, password });
-      onLogin(data); // ✅ App.jsx will handle role-based dashboard
+      onLogin(data); 
     } catch (err) {
       setErr(err.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
+  }
+
+  // Handle Forgot Password Submit
+  async function handleForgot(e) {
+    e.preventDefault();
+    setForgotMsg("Sending request...");
+    try {
+      await api.forgotPassword(forgotEmail);
+      setForgotMsg("✅ If that email exists, a temporary password has been sent.");
+    } catch (error) {
+      setForgotMsg("❌ Error sending request.");
+    }
+  }
+
+  // Render Forgot Password View
+  if (showForgot) {
+     return (
+        <div className="app">
+         <div className="card" style={{ maxWidth: 450, margin: "60px auto", padding: "40px" }}>
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                <h3 style={{color: "var(--red)", margin:0}}>Reset Password</h3>
+                <p className="small" style={{marginTop:5}}>Enter your email to receive a temporary password.</p>
+            </div>
+            
+            {forgotMsg && <div className="alert" style={{marginBottom:15}}>{forgotMsg}</div>}
+            
+            <form onSubmit={handleForgot}>
+                <div style={{ marginBottom: "15px" }}>
+                    <label>Email Address</label>
+                    <input 
+                        className="input" 
+                        type="email" 
+                        placeholder="Enter registered email"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        required
+                        style={{width:'100%', marginTop:5}}
+                    />
+                </div>
+                <button className="btn" style={{width:'100%', padding:'12px'}}>Send Reset Link</button>
+            </form>
+            
+            <button 
+                className="btn ghost" 
+                style={{marginTop:15, width:'100%'}} 
+                onClick={() => {setShowForgot(false); setForgotMsg("");}}
+            >
+                Back to Login
+            </button>
+         </div>
+        </div>
+     )
   }
 
   return (
@@ -95,6 +153,16 @@ export default function Login({ onLogin, api }) {
                 {showPassword ? "visibility_off" : "visibility"}
               </span>
             </div>
+            
+            {/* FORGOT PASSWORD LINK */}
+             <div style={{textAlign: "right", marginTop: "8px"}}>
+                <span 
+                    style={{fontSize: "13px", color: "var(--red)", cursor: "pointer", fontWeight: 500}}
+                    onClick={() => setShowForgot(true)}
+                >
+                    Forgot Password?
+                </span>
+             </div>
           </div>
 
           {/* Submit */}
