@@ -1,3 +1,4 @@
+// attendance-frontend/src/api.jsx
 // const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
 // const API_BASE = import.meta.env.VITE_API_URL || "https://erp-backend-6wd5.onrender.com/api";
 const API_BASE = "https://erp-backend-production-d377.up.railway.app/api";
@@ -21,6 +22,10 @@ async function request(path, method = "GET", body, token) {
 export default {
   // Authentication
   login: (payload) => request("/login", "POST", payload),
+  
+  // NEW: Forgot Password
+  forgotPassword: (email) => request("/forgot-password", "POST", { email }),
+
   registerAdmin: (payload, token) =>
     request("/register-admin", "POST", payload, token),
 
@@ -116,7 +121,7 @@ export default {
     return data;
   },
 
-  // REVISION 3: List Managers
+  // List Managers
   getManagers: async (token) => {
     const res = await fetch(`${API_BASE}/admin/managers`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -126,7 +131,7 @@ export default {
     return data;
   },
 
-  // REVISION 6: Manager's Assigned Employees
+  // Manager's Assigned Employees
   getManagerEmployees: async (token) => {
     const res = await fetch(`${API_BASE}/manager/my-employees`, {
       headers: { Authorization: `Bearer ${token}` }
