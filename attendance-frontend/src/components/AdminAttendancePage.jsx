@@ -189,7 +189,7 @@ export default function AdminAttendancePage({ token, api }) {
                       <td>
                         {rec.checkin?.photo_url ? (
                           <a
-                            href={`http://localhost:5000${rec.checkin.photo_url}`}
+                            href={rec.checkin.photo_url.startsWith('http') ? rec.checkin.photo_url : `https://erp-backend-production-d377.up.railway.app${rec.checkin.photo_url}`}
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -200,7 +200,7 @@ export default function AdminAttendancePage({ token, api }) {
                       <td>
                         {rec.checkout?.photo_url ? (
                           <a
-                            href={`http://localhost:5000${rec.checkout.photo_url}`}
+                            href={rec.checkout.photo_url.startsWith('http') ? rec.checkout.photo_url : `https://erp-backend-production-d377.up.railway.app${rec.checkout.photo_url}`}
                             target="_blank"
                             rel="noreferrer"
                           >

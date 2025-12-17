@@ -502,14 +502,14 @@ export default function EmployeeDashboard({ token, api }) {
                       <td>
                         {a.photo_url ? (
                           <a 
-                            href={`https://erp-backend-production-d377.up.railway.app${a.photo_url}`} 
+                            href={a.photo_url.startsWith('http') ? a.photo_url : `https://erp-backend-production-d377.up.railway.app${a.photo_url}`} 
                             target="_blank" 
-                            rel="noreferrer"
-                            style={{color:"var(--red)", display:'flex', alignItems:'center', gap:5, fontSize:13}}
+                            rel="noreferrer" 
+                            style={{color:"var(--red)", fontSize:13}}
                           >
-                             <FaCamera /> View Photo
+                            View Photo
                           </a>
-                        ) : <span style={{color:"#ccc"}}>-</span>}
+                        ) : "-"}
                       </td>
                     </tr>
                   ))
