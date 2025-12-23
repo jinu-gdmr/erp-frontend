@@ -5,7 +5,7 @@ import AdminLeavePage from "./AdminLeavePage";
 import AdminAttendancePage from "./AdminAttendancePage";
 import RegisterManager from "./RegisterManager";
 import AdminAttendanceSummary from "./AdminAttendanceSummary";
-import HolidayCalendar from "./HolidayCalendar"; // Import Component
+import HolidayCalendar from "./HolidayCalendar"; 
 import {
   FaUserPlus,
   FaUsers,
@@ -19,7 +19,7 @@ import {
   FaUserClock,
   FaUserSlash,
   FaTimes,
-  FaCalendarAlt // Import Icon
+  FaCalendarAlt 
 } from "react-icons/fa";
 
 export default function AdminDashboard({ token, api }) {
@@ -272,8 +272,6 @@ export default function AdminDashboard({ token, api }) {
                 label="Reports" 
                 onClick={() => setView("summary")} 
               />
-              
-              {/* ✅ ADDED HOLIDAY CALENDAR BUTTON */}
               <QuickLaunchItem 
                 icon={<FaCalendarAlt />} 
                 label="Holidays" 
@@ -351,11 +349,17 @@ export default function AdminDashboard({ token, api }) {
 
           <div style={{ marginTop: "16px" }}>
             {subView === "add" ? (
-              <EmployeeForm onAdd={addEmployee} />
+              // ✅ FIXED: Passed api and token to EmployeeForm
+              <EmployeeForm onAdd={addEmployee} api={api} token={token} />
             ) : loading ? (
               <div className="card">Loading...</div>
             ) : (
-              <EmployeeList employees={employees} onDelete={deleteEmployee} />
+              // ✅ FIXED: Passed onRefresh to EmployeeList
+              <EmployeeList 
+                employees={employees} 
+                onDelete={deleteEmployee} 
+                onRefresh={loadEmployees} 
+              />
             )}
           </div>
         </>
@@ -389,7 +393,7 @@ export default function AdminDashboard({ token, api }) {
         </div>
       )}
 
-      {/* ✅ 6. HOLIDAYS */}
+      {/* 6. HOLIDAYS */}
       {view === "holidays" && (
         <div style={{ marginTop: "16px" }}>
           <HolidayCalendar />
