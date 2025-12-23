@@ -14,53 +14,46 @@ import {
   FaUserCheck,
   FaTimes,
   FaCloudUploadAlt,
-  FaFileAlt,
   FaCalendarAlt, 
-  FaUsers // Added for Team Members
+  FaUsers 
 } from "react-icons/fa";
 
 export default function ManagerDashboard({ token, api }) {
-  // Personal Data State
   const [attendance, setAttendance] = useState([]);
   const [myLeaves, setMyLeaves] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]); // REVISION 6
-  const [view, setView] = useState("dashboard"); // 'dashboard', 'apply-leave', 'my-leaves', 'attendance-log', 'team-leaves', 'team-members'
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [view, setView] = useState("dashboard"); 
   
-  // Leave Form State
+  // UPDATED: Leave Form State
+  const [leaveDuration, setLeaveDuration] = useState("single");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
-  const [date, setDate] = useState("");
   const [type, setType] = useState("full");
   const [file, setFile] = useState(null);
   
-  // General State
   const [loading, setLoading] = useState(false);
-  
-  // Camera State
   const [cameraOpen, setCameraOpen] = useState(false);
   const [actionType, setActionType] = useState(null); 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-
-  // Modal State (For Personal Leave Details)
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalList, setModalList] = useState([]);
 
-  // Derived Personal Stats
   const pendingLeaves = myLeaves.filter(l => l.status === 'Pending');
   const approvedLeaves = myLeaves.filter(l => l.status === 'Approved');
   const rejectedLeaves = myLeaves.filter(l => l.status === 'Rejected');
 
-  // Load Personal Data
   async function load() {
     setLoading(true);
     try {
       const a = await api.myAttendance(token);
       const l = await api.myLeaves(token);
-      const t = await api.getManagerEmployees(token); // REVISION 6
+      const t = await api.getManagerEmployees(token); 
       setAttendance(a);
       setMyLeaves(l);
-      setTeamMembers(t); // REVISION 6
+      setTeamMembers(t); 
     } catch (err) {
       console.error("Error loading data", err);
     } finally {
@@ -72,7 +65,6 @@ export default function ManagerDashboard({ token, api }) {
     load();
   }, []);
 
-  // -------------- CAMERA HANDLERS (Omitted for brevity - Unchanged) --------------
   async function openCamera(type) {
     setActionType(type);
     setCameraOpen(true);
@@ -120,12 +112,20 @@ export default function ManagerDashboard({ token, api }) {
     }
   }
   
-  // -------------- LEAVE FORM HANDLER (Omitted for brevity - Unchanged) --------------
+  // UPDATED LEAVE SUBMISSION
   async function applyLeave(e) {
     e.preventDefault();
     try {
-      await api.applyLeaveWithFile({ date, type, reason }, file, token);
-      setDate("");
+      let payload = {
+         type, 
+         reason,
+         from_date: startDate,
+         to_date: leaveDuration === 'single' ? startDate : endDate
+      };
+
+      await api.applyLeaveWithFile(payload, file, token);
+      setStartDate("");
+      setEndDate("");
       setReason("");
       setFile(null);
       await load();
@@ -136,7 +136,6 @@ export default function ManagerDashboard({ token, api }) {
     }
   }
 
-  // -------------- HELPER FUNCTIONS (Omitted for brevity - Unchanged) --------------
   function handleStatClick(title, list) {
     setModalTitle(title);
     setModalList(list);
@@ -145,7 +144,6 @@ export default function ManagerDashboard({ token, api }) {
 
   const getStatusClass = (status) => (status ? status.toLowerCase() : "pending");
 
-  // -------------- SUB-COMPONENTS (Omitted for brevity - Unchanged) --------------
   const QuickLaunchItem = ({ icon, label, onClick, color = "var(--red)" }) => (
     <div className="quick-launch-item" onClick={onClick}>
       <div className="quick-launch-icon" style={{ color: color }}>{icon}</div>
@@ -154,43 +152,23 @@ export default function ManagerDashboard({ token, api }) {
   );
 
   const StatItem = ({ icon, label, count, colorClass, onClick }) => (
-    <div 
-      className="stat-row clickable-stat" 
-      onClick={onClick}
-      title="Click to view details"
-    >
+    <div className="stat-row clickable-stat" onClick={onClick}>
       <div className={`stat-icon-box ${colorClass}`}>{icon}</div>
-      <div className="stat-info">
-        <span className="stat-count">{count}</span>
-        <span className="stat-label">{label}</span>
-      </div>
+      <div className="stat-info"><span className="stat-count">{count}</span><span className="stat-label">{label}</span></div>
     </div>
   );
 
-  // --- NEW: Team Members List Component (REVISION 6) ---
   const TeamMembersList = () => (
     <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
         <div style={{overflowX: 'auto'}}>
             <table className="styled-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Department</th>
-                        <th>Position</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Position</th></tr></thead>
                 <tbody>
                     {teamMembers.length === 0 ? (
-                        <tr><td colSpan="4" style={{textAlign:"center", padding:20, color:"#999"}}>No employees assigned to you yet.</td></tr>
+                        <tr><td colSpan="4" style={{textAlign:"center", padding:20, color:"#999"}}>No employees assigned.</td></tr>
                     ) : (
                         teamMembers.map((m) => (
-                            <tr key={m._id}>
-                                <td style={{fontWeight:500}}>{m.name}</td>
-                                <td>{m.email}</td>
-                                <td>{m.department}</td>
-                                <td>{m.position}</td>
-                            </tr>
+                            <tr key={m._id}><td style={{fontWeight:500}}>{m.name}</td><td>{m.email}</td><td>{m.department}</td><td>{m.position}</td></tr>
                         ))
                     )}
                 </tbody>
@@ -199,58 +177,13 @@ export default function ManagerDashboard({ token, api }) {
     </div>
   );
 
-
-  // -------------- MAIN RENDER --------------
   return (
     <div>
-      {/* ---------------- CSS Styles (Omitted for brevity - unchanged) ---------------- */}
       <style>{`
-        /* Form Inputs */
-        .modern-input {
-          width: 100%;
-          padding: 10px 12px;
-          border: 1px solid #ddd;
-          border-radius: 6px;
-          font-size: 14px;
-          transition: all 0.2s;
-          background: #fff;
-          color: #333;
-        }
-        .modern-input:focus {
-          border-color: #b91c1c;
-          outline: none;
-          box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
-        }
-        .modern-label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #555;
-          margin-bottom: 6px;
-          display: block;
-        }
-
-        /* File Upload */
-        .file-upload-label {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          border: 2px dashed #ddd;
-          border-radius: 8px;
-          background: #fafafa;
-          color: #666;
-          cursor: pointer;
-          transition: all 0.2s;
-          gap: 10px;
-        }
-        .file-upload-label:hover {
-          border-color: #b91c1c;
-          background: #fff5f5;
-          color: #b91c1c;
-        }
-
-        .clickable-stat { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .clickable-stat:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #fff; }
+        .modern-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fff; color: #333; }
+        .modern-label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; display: block; }
+        .file-upload-label { display: flex; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #ddd; border-radius: 8px; background: #fafafa; color: #666; cursor: pointer; gap: 10px; }
+        .clickable-stat { cursor: pointer; transition: transform 0.2s; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
         .modal-card { background: white; width: 450px; max-width: 90%; border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 80vh; }
         .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; text-transform: capitalize; min-width: 80px; text-align: center; }
@@ -261,7 +194,6 @@ export default function ManagerDashboard({ token, api }) {
         .status-badge.checkout { color: #dc2626; }
       `}</style>
 
-      {/* HEADER */}
       {view === "dashboard" ? (
         <div className="dashboard-header-card card">
           <h2 style={{ color: "var(--red)", margin: 0 }}>Manager Dashboard</h2>
@@ -272,212 +204,116 @@ export default function ManagerDashboard({ token, api }) {
           <button className="btn ghost" onClick={() => setView("dashboard")} style={{padding: '8px 12px', display:'flex', alignItems:'center', gap:6}}>
             <FaArrowLeft /> Back
           </button>
-          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>
-            {view.replace("-", " ")}
-          </h3>
+          <h3 style={{ margin: 0, color: "var(--red)", textTransform: 'capitalize' }}>{view.replace("-", " ")}</h3>
         </div>
       )}
 
-      {/* DASHBOARD WIDGETS */}
       {view === "dashboard" && (
         <div className="dashboard-grid-container">
-          
-          {/* Widget 1: Quick Actions (Mixed) */}
           <div className="card dashboard-widget">
             <h4 className="widget-title">Quick Actions</h4>
             <div className="quick-launch-grid">
-              {/* Personal Actions */}
-              <QuickLaunchItem 
-                icon={<FaCamera />} 
-                label="Check In" 
-                onClick={() => openCamera("checkin")}
-                color="green"
-              />
-              <QuickLaunchItem 
-                icon={<FaSignOutAlt />} 
-                label="Check Out" 
-                onClick={() => openCamera("checkout")}
-                color="#b91c1c"
-              />
-              <QuickLaunchItem 
-                icon={<FaCalendarPlus />} 
-                label="Apply Leave" 
-                onClick={() => setView("apply-leave")}
-              />
-              
-              {/* Manager Actions */}
-              <QuickLaunchItem 
-                icon={<FaUserCheck />} 
-                label="Team Leaves" 
-                onClick={() => setView("team-leaves")}
-                color="var(--red)"
-              />
-
-               {/* REVISION 6: Team Members List */}
-              <QuickLaunchItem 
-                icon={<FaUsers />} 
-                label="Team Members" 
-                onClick={() => setView("team-members")}
-                color="var(--red)"
-              />
-              
-              {/* Personal Logs */}
-              <QuickLaunchItem 
-                icon={<FaCalendarCheck />} 
-                label="My Leaves" 
-                onClick={() => setView("my-leaves")}
-              />
-              <QuickLaunchItem 
-                icon={<FaHistory />} 
-                label="My Logs" 
-                onClick={() => setView("attendance-log")}
-              />
-
-              {/* Holiday Calendar */}
-              <QuickLaunchItem 
-                icon={<FaCalendarAlt />} 
-                label="Holidays" 
-                onClick={() => setView("holidays")} 
-              />
+              <QuickLaunchItem icon={<FaCamera />} label="Check In" onClick={() => openCamera("checkin")} color="green" />
+              <QuickLaunchItem icon={<FaSignOutAlt />} label="Check Out" onClick={() => openCamera("checkout")} color="#b91c1c" />
+              <QuickLaunchItem icon={<FaCalendarPlus />} label="Apply Leave" onClick={() => setView("apply-leave")} />
+              <QuickLaunchItem icon={<FaUserCheck />} label="Team Leaves" onClick={() => setView("team-leaves")} color="var(--red)" />
+              <QuickLaunchItem icon={<FaUsers />} label="Team Members" onClick={() => setView("team-members")} color="var(--red)" />
+              <QuickLaunchItem icon={<FaCalendarCheck />} label="My Leaves" onClick={() => setView("my-leaves")} />
+              <QuickLaunchItem icon={<FaHistory />} label="My Logs" onClick={() => setView("attendance-log")} />
+              <QuickLaunchItem icon={<FaCalendarAlt />} label="Holidays" onClick={() => setView("holidays")} />
             </div>
           </div>
 
-          {/* Widget 2: My Personal Stats */}
           <div className="card dashboard-widget">
             <h4 className="widget-title">My Leave Stats</h4>
             <div className="stats-list">
-              <StatItem 
-                icon={<FaHourglassHalf />} 
-                label="Pending Requests" 
-                count={pendingLeaves.length} 
-                colorClass="text-orange" 
-                onClick={() => handleStatClick("My Pending Requests", pendingLeaves)}
-              />
-              <StatItem 
-                icon={<FaCheckCircle />} 
-                label="Approved Leaves" 
-                count={approvedLeaves.length} 
-                colorClass="text-green" 
-                onClick={() => handleStatClick("My Approved Leaves", approvedLeaves)}
-              />
-              <StatItem 
-                icon={<FaTimesCircle />} 
-                label="Rejected Leaves" 
-                count={rejectedLeaves.length} 
-                colorClass="text-red" 
-                onClick={() => handleStatClick("My Rejected Leaves", rejectedLeaves)}
-              />
+              <StatItem icon={<FaHourglassHalf />} label="Pending" count={pendingLeaves.length} colorClass="text-orange" onClick={() => handleStatClick("My Pending", pendingLeaves)} />
+              <StatItem icon={<FaCheckCircle />} label="Approved" count={approvedLeaves.length} colorClass="text-green" onClick={() => handleStatClick("My Approved", approvedLeaves)} />
+              <StatItem icon={<FaTimesCircle />} label="Rejected" count={rejectedLeaves.length} colorClass="text-red" onClick={() => handleStatClick("My Rejected", rejectedLeaves)} />
             </div>
           </div>
         </div>
       )}
 
-      {/* --- INNER VIEWS --- */}
-
-      {/* 1. TEAM LEAVES (Manager Approval) */}
-      {view === "team-leaves" && (
-        <div style={{ marginTop: 16 }}>
-          <AdminLeavePage token={token} api={api} />
-        </div>
-      )}
-
-      {/* REVISION 6: TEAM MEMBERS */}
+      {view === "team-leaves" && <div style={{ marginTop: 16 }}><AdminLeavePage token={token} api={api} /></div>}
       {view === "team-members" && <TeamMembersList />}
       
-      {/* 2. APPLY LEAVE (Personal) - STYLED NOW (Omitted for brevity - unchanged) */}
+      {/* --- APPLY LEAVE (UPDATED) --- */}
       {view === "apply-leave" && (
         <div className="card" style={{ marginTop: 16 }}>
           <form onSubmit={applyLeave}>
+            
+            <div style={{display:'flex', gap:20, marginBottom:15}}>
+                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                    <input type="radio" name="duration" checked={leaveDuration === 'single'} onChange={() => setLeaveDuration('single')} />
+                    <span style={{fontWeight:500}}>Single Day</span>
+                </label>
+                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                    <input type="radio" name="duration" checked={leaveDuration === 'multiple'} onChange={() => setLeaveDuration('multiple')} />
+                    <span style={{fontWeight:500}}>Multiple Days</span>
+                </label>
+            </div>
+
             <div className="form-row">
               <div style={{flex:1}}>
-                <label className="modern-label">Start Date</label>
-                <input
-                  className="modern-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
+                <label className="modern-label">{leaveDuration === 'single' ? 'Date' : 'Start Date'}</label>
+                <input className="modern-input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
               </div>
-              <div style={{flex:1}}>
-                <label className="modern-label">Leave Type</label>
-                <select
-                  className="modern-input"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                >
-                  <option value="full">Full Day</option>
-                  <option value="half">Half Day</option>
-                </select>
-              </div>
+              
+              {leaveDuration === 'multiple' && (
+                  <div style={{flex:1}}>
+                    <label className="modern-label">End Date</label>
+                    <input className="modern-input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
+                  </div>
+              )}
+
+              {leaveDuration === 'single' && (
+                  <div style={{flex:1}}>
+                    <label className="modern-label">Leave Type</label>
+                    <select className="modern-input" value={type} onChange={(e) => setType(e.target.value)}>
+                      <option value="full">Full Day</option>
+                      <option value="half">Half Day</option>
+                    </select>
+                  </div>
+              )}
             </div>
 
             <div style={{marginTop: 15}}>
               <label className="modern-label">Reason for Leave</label>
-              <textarea
-                className="modern-input"
-                style={{minHeight: "100px", resize: "vertical"}}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                required
-                placeholder="Please explain the reason..."
-              />
+              <textarea className="modern-input" style={{minHeight: "100px", resize: "vertical"}} value={reason} onChange={(e) => setReason(e.target.value)} required placeholder="Reason..." />
             </div>
 
             <div style={{marginTop: 15}}>
               <label className="modern-label">Attachment (Optional)</label>
               <label className="file-upload-label">
                 <FaCloudUploadAlt size={24} />
-                <span>{file ? file.name : "Click to upload a document"}</span>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => setFile(e.target.files[0])}
-                  style={{display: "none"}}
-                />
+                <span>{file ? file.name : "Click to upload"}</span>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} style={{display: "none"}} />
               </label>
             </div>
 
             <div style={{ marginTop: 25, display:'flex', justifyContent:'flex-end' }}>
-              <button className="btn" type="submit" style={{padding: "10px 24px"}}>
-                Submit Request
-              </button>
+              <button className="btn" type="submit" style={{padding: "10px 24px"}}>Submit Request</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* 3. MY LEAVES (Personal History) (Omitted for brevity - unchanged) */}
       {view === "my-leaves" && (
         <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
           <div style={{overflowX: 'auto'}}>
             <table className="styled-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Manager</th>
-                  <th>HR</th>
-                  <th>Overall</th>
-                  <th>Attachment</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Date</th><th>Type</th><th>Status</th><th>Attachment</th></tr></thead>
               <tbody>
                 {myLeaves.length === 0 ? (
-                  <tr><td colSpan="6" style={{textAlign:"center", padding:20, color:"#999"}}>No leaves found.</td></tr>
+                  <tr><td colSpan="4" style={{textAlign:"center", padding:20, color:"#999"}}>No leaves found.</td></tr>
                 ) : (
                   myLeaves.map((l) => (
                     <tr key={l._id}>
-                      <td style={{fontWeight:500}}>{l.date}</td>
+                      <td style={{fontWeight:500}}>{l.from_date && l.to_date && l.from_date !== l.to_date ? `${l.from_date} to ${l.to_date}` : l.date}</td>
                       <td style={{textTransform:"capitalize"}}>{l.type}</td>
-                      <td><span className={`status-badge ${getStatusClass(l.manager_status)}`}>{l.manager_status || 'Pending'}</span></td>
-                      <td><span className={`status-badge ${getStatusClass(l.admin_status)}`}>{l.admin_status || 'Pending'}</span></td>
                       <td><span className={`status-badge ${getStatusClass(l.status)}`}>{l.status || 'Pending'}</span></td>
-                      <td>
-                        {l.attachment_url ? (
-                          <a href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View</a>
-                        ) : "-"}
-                      </td>
+                      <td>{l.attachment_url ? <a href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View</a> : "-"}</td>
                     </tr>
                   ))
                 )}
@@ -487,90 +323,50 @@ export default function ManagerDashboard({ token, api }) {
         </div>
       )}
 
-      {/* 4. ATTENDANCE LOG (Personal) (Omitted for brevity - unchanged) */}
       {view === "attendance-log" && (
         <div className="card" style={{ marginTop: 16, padding:0, overflow:"hidden" }}>
-           {loading ? <p style={{padding:20}}>Loading...</p> : (
             <table className="styled-table">
-              <thead>
-                <tr><th>Type</th><th>Date / Time</th><th>Photo</th></tr>
-              </thead>
+              <thead><tr><th>Type</th><th>Date / Time</th><th>Photo</th></tr></thead>
               <tbody>
-                {attendance.length === 0 ? (
-                  <tr><td colSpan="3" style={{textAlign:"center", padding:20, color:"#999"}}>No records yet.</td></tr>
-                ) : (
-                  attendance.map((a) => (
+                {attendance.map((a) => (
                     <tr key={a._id}>
-                      <td style={{fontWeight: 600}}>
-                        <span className={`status-badge ${a.type}`}>{a.type === 'checkin' ? 'Check In' : 'Check Out'}</span>
-                      </td>
+                      <td style={{fontWeight: 600}}><span className={`status-badge ${a.type}`}>{a.type === 'checkin' ? 'Check In' : 'Check Out'}</span></td>
                       <td>{new Date(a.time).toLocaleString()}</td>
-                      <td>
-                        {a.photo_url ? (
-                          <a href={`https://erp-backend-production-d377.up.railway.app${a.photo_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View Photo</a>
-                        ) : "-"}
-                      </td>
+                      <td>{a.photo_url ? <a href={a.photo_url.startsWith('http') ? a.photo_url : `https://erp-backend-production-d377.up.railway.app${a.photo_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View</a> : "-"}</td>
                     </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
-           )}
         </div>
       )}
 
-      {/* 5. HOLIDAYS (Omitted for brevity - unchanged) */}
-      {view === "holidays" && (
-        <div style={{ marginTop: "16px" }}>
-          <HolidayCalendar />
-        </div>
-      )}
+      {view === "holidays" && <div style={{ marginTop: "16px" }}><HolidayCalendar /></div>}
 
-      {/* --- LEAVE DETAILS MODAL (For My Stats) (Omitted for brevity - unchanged) --- */}
       {leaveModalOpen && (
         <div className="modal-overlay" onClick={() => setLeaveModalOpen(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex', justifyContent:'space-between', marginBottom:15, borderBottom:'1px solid #eee', paddingBottom:10}}>
+            <div style={{display:'flex', justifyContent:'space-between', marginBottom:15}}>
               <h3 style={{ margin: 0, color: 'var(--red)' }}>{modalTitle}</h3>
-              <button className="btn ghost" onClick={() => setLeaveModalOpen(false)} style={{padding:'4px 8px'}}><FaTimes /></button>
+              <button className="btn ghost" onClick={() => setLeaveModalOpen(false)}><FaTimes /></button>
             </div>
-            
             <div style={{overflowY:'auto', flex:1}}>
-              {modalList.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No records found.</p>
-              ) : (
-                modalList.map((l) => (
-                  <div key={l._id} style={{padding:12, borderBottom:'1px solid #f9f9f9', display:'flex', flexDirection:'column', gap:6}}>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                        <span style={{fontWeight:600}}>{l.date}</span>
-                        <span style={{fontSize:11, background:'#eee', padding:'2px 6px', borderRadius:4}}>{l.type}</span>
-                    </div>
-                    <div style={{fontSize:13, color:'#666', fontStyle:'italic'}}>"{l.reason || "No reason"}"</div>
-                    <div style={{display:'flex', gap:10, marginTop:4, fontSize:12}}>
-                        <div><span style={{color:'#888'}}>Manager:</span> <span className={`status-badge ${getStatusClass(l.manager_status)}`} style={{marginLeft:4, padding:'2px 6px', fontSize:10}}>{l.manager_status || 'Pending'}</span></div>
-                        <div><span style={{color:'#888'}}>HR:</span> <span className={`status-badge ${getStatusClass(l.admin_status)}`} style={{marginLeft:4, padding:'2px 6px', fontSize:10}}>{l.admin_status || 'Pending'}</span></div>
-                    </div>
+               {modalList.map((l) => (
+                  <div key={l._id} style={{padding:12, borderBottom:'1px solid #f9f9f9'}}>
+                    <div style={{fontWeight:600}}>{l.date || l.from_date}</div>
+                    <div style={{fontSize:13, color:'#666'}}>"{l.reason}"</div>
+                    <span className={`status-badge ${getStatusClass(l.status)}`} style={{marginTop:5}}>{l.status}</span>
                   </div>
-                ))
-              )}
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* CAMERA MODAL (Omitted for brevity - unchanged) */}
       {cameraOpen && (
         <div className="camera-modal">
           <div className="camera-box">
-            <h4 style={{marginBottom: 10, color: '#333'}}>
-              {actionType === 'checkin' ? 'Check In' : 'Check Out'}
-            </h4>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              style={{ width: "100%", borderRadius: "8px", background:'#000' }}
-            ></video>
+            <h4 style={{marginBottom: 10, color: '#333'}}>{actionType === 'checkin' ? 'Check In' : 'Check Out'}</h4>
+            <video ref={videoRef} autoPlay playsInline style={{ width: "100%", borderRadius: "8px", background:'#000' }}></video>
             <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
             <div style={{ marginTop: 15, display:'flex', justifyContent:'center', gap: 10 }}>
               <button className="btn" onClick={capturePhoto}>Capture & Submit</button>
