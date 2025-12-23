@@ -1,9 +1,6 @@
 // attendance-frontend/src/api.jsx
-// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/";
-// const API_BASE = import.meta.env.VITE_API_URL || "https://erp-backend-6wd5.onrender.com/api";
 const API_BASE = "https://erp-backend-production-d377.up.railway.app/api";
 
-// Reusable JSON request helper
 async function request(path, method = "GET", body, token) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -22,35 +19,30 @@ async function request(path, method = "GET", body, token) {
 export default {
   // Authentication
   login: (payload) => request("/login", "POST", payload),
-  
-  // NEW: Forgot Password
   forgotPassword: (email) => request("/forgot-password", "POST", { email }),
 
-  registerAdmin: (payload, token) =>
-    request("/register-admin", "POST", payload, token),
-
-  registerManager: (payload, token) =>
-    request("/register-manager", "POST", payload, token),
+  registerAdmin: (payload, token) => request("/register-admin", "POST", payload, token),
+  registerManager: (payload, token) => request("/register-manager", "POST", payload, token),
 
   // Employees
-  addEmployee: (payload, token) =>
-    request("/admin/employees", "POST", payload, token),
+  addEmployee: (payload, token) => request("/admin/employees", "POST", payload, token),
   listEmployees: (token) => request("/admin/employees", "GET", null, token),
-  deleteEmployee: (id, token) =>
-    request(`/admin/employees/${id}`, "DELETE", null, token),
-  editEmployee: (id, payload, token) =>
-    request(`/admin/employees/${id}`, "PUT", payload, token),
+  deleteEmployee: (id, token) => request(`/admin/employees/${id}`, "DELETE", null, token),
+  editEmployee: (id, payload, token) => request(`/admin/employees/${id}`, "PUT", payload, token),
+
+  // Managers
+  getManagers: (token) => request("/admin/managers", "GET", null, token),
+  editManager: (id, payload, token) => request(`/admin/managers/${id}`, "PUT", payload, token),
+  deleteManager: (id, token) => request(`/admin/managers/${id}`, "DELETE", null, token),
+  getManagerEmployees: (token) => request("/manager/my-employees", "GET", null, token),
 
   // Attendance
   checkin: (token) => request("/attendance/checkin", "POST", null, token),
   checkout: (token) => request("/attendance/checkout", "POST", null, token),
   myAttendance: (token) => request("/my/attendance", "GET", null, token),
   adminAttendance: (token) => request("/admin/attendance", "GET", null, token),
-  employeeAttendance: (id, token) =>
-    request(`/admin/attendance/${id}`, "GET", null, token),
-
+  employeeAttendance: (id, token) => request(`/admin/attendance/${id}`, "GET", null, token),
   todayStats: (token) => request("/admin/today-stats", "GET", null, token),
-
 
   // Attendance with Photo
   checkinWithPhoto: async (token, imageData) => {
@@ -84,14 +76,17 @@ export default {
   // Leaves
   applyLeave: (payload, token) => request("/leaves", "POST", payload, token),
   adminLeaves: (token) => request("/admin/leaves", "GET", null, token),
-  updateLeave: (id, payload, token) =>
-    request(`/admin/leaves/${id}`, "PUT", payload, token),
+  updateLeave: (id, payload, token) => request(`/admin/leaves/${id}`, "PUT", payload, token),
   myLeaves: (token) => request("/my/leaves", "GET", null, token),
 
-  // Leave with file
+  // Leave with file (UPDATED FOR DATE RANGES)
   applyLeaveWithFile: async (payload, file, token) => {
     const formData = new FormData();
-    formData.append("date", payload.date);
+    // Payload should contain either single 'date' (legacy) or 'from_date' and 'to_date'
+    if(payload.from_date) formData.append("from_date", payload.from_date);
+    if(payload.to_date) formData.append("to_date", payload.to_date);
+    if(payload.date) formData.append("date", payload.date); 
+    
     formData.append("type", payload.type);
     formData.append("reason", payload.reason);
     if (file) formData.append("attachment", file);
@@ -107,45 +102,11 @@ export default {
     return data;
   },
 
-    // Attendance Summary (Admin Dashboard)
   getAttendanceSummary: async (month, token) => {
     const res = await fetch(
       `${API_BASE}/admin/attendance-summary?month=${month}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    const data = await res.json();
-    if (!res.ok) throw data;
-    return data;
-  },
-
-  // List Managers
-  getManagers: async (token) => {
-    const res = await fetch(`${API_BASE}/admin/managers`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!res.ok) throw data;
-    return data;
-  },
-
-  // Manager's Assigned Employees
-  getManagerEmployees: async (token) => {
-    const res = await fetch(`${API_BASE}/manager/my-employees`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!res.ok) throw data;
-    return data;
-  },
-
-  deleteManager: async (id, token) => {
-    const res = await fetch(`${API_BASE}/admin/managers/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    });
     const data = await res.json();
     if (!res.ok) throw data;
     return data;

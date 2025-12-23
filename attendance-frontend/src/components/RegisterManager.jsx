@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 
 const departments = [
-  "Sales", "Marketing", "Technology", "Finance", "HR", "Management", "Operations"
+  "Projects Dept",
+  "Accounts Dept",
+  "Graphic Designing Dept",
+  "HR Dept",
+  "Administration Dept",
+  "BRD Dept",
+  "Engineering Dept",
+  "Digital Marketing Dept"
 ];
 
 export default function RegisterManager({ token, api }) {
@@ -9,7 +16,7 @@ export default function RegisterManager({ token, api }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [department, setDepartment] = useState(departments[0]); // NEW: Department State
+  const [department, setDepartment] = useState(departments[0]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [msg, setMsg] = useState("");
@@ -17,7 +24,10 @@ export default function RegisterManager({ token, api }) {
   const [managers, setManagers] = useState([]); 
   const [loading, setLoading] = useState(false);
 
-  // Load managers list
+  // Edit State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingManager, setEditingManager] = useState(null);
+
   async function loadManagers() {
     try {
       setLoading(true);
@@ -45,13 +55,13 @@ export default function RegisterManager({ token, api }) {
     }
 
     try {
-      await api.registerManager({ name, email, password, department }, token); // Department added to payload
+      await api.registerManager({ name, email, password, department }, token);
       setMsg("✅ Manager registered successfully!");
       setName("");
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-      setDepartment(departments[0]); // Reset department
+      setDepartment(departments[0]);
       loadManagers(); 
     } catch (err) {
       setMsg("❌ " + (err.message || "Error registering manager"));
@@ -60,24 +70,40 @@ export default function RegisterManager({ token, api }) {
     setShowModal(true);
   }
 
-  // Delete Manager
   async function deleteManager(id) {
     if (!window.confirm("Delete this manager?")) return;
     try {
       await api.deleteManager(id, token);
-      loadManagers(); // refresh
+      loadManagers(); 
     } catch (err) {
       alert("Error deleting manager");
     }
   }
 
+  // Edit Logic
+  const handleEditClick = (manager) => {
+    setEditingManager({ ...manager });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSave = async (e) => {
+    e.preventDefault();
+    try {
+      await api.editManager(editingManager._id, editingManager, token);
+      setEditModalOpen(false);
+      setEditingManager(null);
+      loadManagers();
+      alert("Manager updated successfully");
+    } catch (err) {
+      alert("Failed to update manager");
+    }
+  };
+
   return (
     <div className="card">
       <h3 style={{ color: "#b91c1c" }}>Register Manager</h3>
 
-      {/* Form Section */}
       <form onSubmit={submit}>
-        {/* Row 1: Name and Email */}
         <div className="form-row">
           <div style={{ flex: 1 }}>
             <label>Name</label>
@@ -101,7 +127,6 @@ export default function RegisterManager({ token, api }) {
           </div>
         </div>
         
-        {/* NEW Row: Department Assignment */}
         <div className="form-row">
            <div style={{ flex: 1 }}>
             <label>Department</label>
@@ -109,13 +134,9 @@ export default function RegisterManager({ token, api }) {
               {departments.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <div style={{ flex: 1 }}>
-            {/* Empty spacer div for alignment */}
-          </div>
+          <div style={{ flex: 1 }}></div>
         </div>
 
-
-        {/* Row 2: Passwords */}
         <div className="form-row">
           <div style={{ flex: 1, position: "relative" }}>
             <label>Password</label>
@@ -179,7 +200,6 @@ export default function RegisterManager({ token, api }) {
         </div>
       </form>
 
-      {/* Manager List Section */}
       <h3 style={{ color: "#b91c1c", marginTop: "20px" }}>Manager List</h3>
 
       {loading && <p>Loading managers...</p>}
@@ -191,7 +211,7 @@ export default function RegisterManager({ token, api }) {
             <tr>
               <th>Name</th>
               <th>Email</th>
-              <th>Department</th> {/* NEW: Department Column */}
+              <th>Department</th>
               <th style={{ textAlign: "center" }}>Action</th>
             </tr>
           </thead>
@@ -200,11 +220,14 @@ export default function RegisterManager({ token, api }) {
               <tr key={m._id}>
                 <td>{m.name}</td>
                 <td>{m.email}</td>
-                <td>{m.department}</td> {/* NEW: Department Data */}
-                <td style={{ textAlign: "center" }}>
+                <td>{m.department}</td>
+                <td style={{ textAlign: "center", display: "flex", gap: "5px", justifyContent: "center" }}>
+                  <button className="btn ghost" onClick={() => handleEditClick(m)} style={{padding: "5px 10px"}}>
+                    Edit
+                  </button>
                   <button
                     className="btn"
-                    style={{ background: "#b91c1c" }}
+                    style={{ background: "#b91c1c", padding: "5px 10px" }}
                     onClick={() => deleteManager(m._id)}
                   >
                     Delete
@@ -216,18 +239,44 @@ export default function RegisterManager({ token, api }) {
         </table>
       )}
 
-      {/* Modal */}
+      {/* Message Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-box"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h4 style={{ color: "#b91c1c" }}>Message</h4>
             <p style={{ color: msg.includes("✅") ? "green" : "red" }}>{msg}</p>
             <button className="btn" onClick={() => setShowModal(false)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Manager Modal */}
+      {editModalOpen && editingManager && (
+        <div className="modal-overlay" onClick={() => setEditModalOpen(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{width: 400}}>
+            <h3 style={{color: "#b91c1c"}}>Edit Manager</h3>
+            <form onSubmit={handleEditSave}>
+               <div style={{textAlign: "left", marginBottom: 10}}>
+                  <label>Name</label>
+                  <input className="input" value={editingManager.name} onChange={e => setEditingManager({...editingManager, name: e.target.value})} required />
+               </div>
+               <div style={{textAlign: "left", marginBottom: 10}}>
+                  <label>Email</label>
+                  <input className="input" type="email" value={editingManager.email} onChange={e => setEditingManager({...editingManager, email: e.target.value})} required />
+               </div>
+               <div style={{textAlign: "left", marginBottom: 15}}>
+                  <label>Department</label>
+                  <select className="input" value={editingManager.department} onChange={e => setEditingManager({...editingManager, department: e.target.value})} required>
+                     {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+               </div>
+               <div className="modal-actions">
+                  <button className="btn" type="submit">Save Changes</button>
+                  <button className="btn ghost" type="button" onClick={() => setEditModalOpen(false)}>Cancel</button>
+               </div>
+            </form>
           </div>
         </div>
       )}

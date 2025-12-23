@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"; 
 
 export default function AdminLeavePage({ token, api }) {
-  const role = localStorage.getItem("role"); // "admin" or "manager"
+  const role = localStorage.getItem("role"); 
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +34,6 @@ export default function AdminLeavePage({ token, api }) {
     }
   }
 
-  // Helper to safely get lowercase status for CSS class
   const getStatusClass = (status) => (status ? status.toLowerCase() : "pending");
 
   return (
@@ -59,10 +58,10 @@ export default function AdminLeavePage({ token, api }) {
             <thead>
               <tr>
                 <th>Employee</th>
-                <th>Date</th>
+                <th>Date / Period</th>
                 <th>Reason</th>
-                <th>Manager Status</th>
-                <th>HR Status</th>
+                <th>Manager</th>
+                <th>HR</th>
                 <th>Overall</th>
                 <th>Action</th>
               </tr>
@@ -74,7 +73,14 @@ export default function AdminLeavePage({ token, api }) {
                     <div style={{ fontWeight: 600, color: "#333" }}>{l.employee_name}</div>
                     <div className="small" style={{ textTransform: "capitalize" }}>{l.type}</div>
                   </td>
-                  <td style={{ fontSize: "13px" }}>{l.date}</td>
+                  
+                  {/* Date Column Display Range if exists */}
+                  <td style={{ fontSize: "13px" }}>
+                      {l.from_date && l.to_date && l.from_date !== l.to_date 
+                         ? `${l.from_date} to ${l.to_date}` 
+                         : l.date}
+                  </td>
+                  
                   <td style={{ fontSize: "13px", color: "#555", maxWidth: "200px" }}>
                     {l.reason || "-"}
                     {l.attachment_url && (
@@ -91,28 +97,10 @@ export default function AdminLeavePage({ token, api }) {
                     )}
                   </td>
                   
-                  {/* Manager Status Column */}
-                  <td>
-                    <span className={`status-badge ${getStatusClass(l.manager_status)}`}>
-                      {l.manager_status || 'Pending'}
-                    </span>
-                  </td>
+                  <td><span className={`status-badge ${getStatusClass(l.manager_status)}`}>{l.manager_status || 'Pending'}</span></td>
+                  <td><span className={`status-badge ${getStatusClass(l.admin_status)}`}>{l.admin_status || 'Pending'}</span></td>
+                  <td><span className={`status-badge ${getStatusClass(l.status)}`}>{l.status || 'Pending'}</span></td>
 
-                  {/* HR Status Column */}
-                  <td>
-                    <span className={`status-badge ${getStatusClass(l.admin_status)}`}>
-                      {l.admin_status || 'Pending'}
-                    </span>
-                  </td>
-
-                  {/* Overall Status Column */}
-                  <td>
-                    <span className={`status-badge ${getStatusClass(l.status)}`}>
-                      {l.status || 'Pending'}
-                    </span>
-                  </td>
-
-                  {/* Action Buttons based on Role */}
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {role === 'manager' && (
