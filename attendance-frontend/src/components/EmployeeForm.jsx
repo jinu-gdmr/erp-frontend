@@ -1,22 +1,28 @@
 import React, {useState, useEffect} from "react";
 
 const departments = [
-  "Sales", "Management", "Team Leads", "HR", "", "Digital Team", "Graphics Team", "Projects Team", "Brand Research and Development", "Engineering Team", "Finance  Team", "Administration Team"
+  "Projects Dept",
+  "Accounts Dept",
+  "Graphic Designing Dept",
+  "HR Dept",
+  "Administration Dept",
+  "BRD Dept",
+  "Engineering Dept",
+  "Digital Marketing Dept"
 ];
 
-export default function EmployeeForm({ onAdd, api, token }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState(departments[0]); 
-  const [position, setPosition] = useState("");
-  const [managerId, setManagerId] = useState("");
+export default function EmployeeForm({ onAdd, initialData, api, token }) {
+  const [name, setName] = useState(initialData?.name || "");
+  const [email, setEmail] = useState(initialData?.email || "");
+  const [department, setDepartment] = useState(initialData?.department || departments[0]); 
+  const [position, setPosition] = useState(initialData?.position || "");
+  const [managerId, setManagerId] = useState(initialData?.manager_id || "");
   const [managers, setManagers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
   async function loadManagers() {
     try {
-      // API call to fetch all registered managers (REVISION 3)
       const list = await api.getManagers(token);
       setManagers(list);
     } catch (err) {
@@ -40,8 +46,12 @@ export default function EmployeeForm({ onAdd, api, token }) {
         position, 
         manager_id: managerId || undefined 
       });
-      setMsg("Employee added — credentials sent by email.");
-      setName(""); setEmail(""); setDepartment(departments[0]); setPosition(""); setManagerId("");
+      if (!initialData) {
+          setMsg("Employee added — credentials sent by email.");
+          setName(""); setEmail(""); setDepartment(departments[0]); setPosition(""); setManagerId("");
+      } else {
+          setMsg("Employee updated successfully.");
+      }
     } catch (err) {
       setMsg(err.message || "Error");
     } finally { setSaving(false); }
@@ -49,18 +59,15 @@ export default function EmployeeForm({ onAdd, api, token }) {
 
   return (
     <div className="card">
-      <h3 style={{color:"#b91c1c"}}>Add Employee</h3>
-      {msg && <div className="small" style={{color: msg.startsWith("Employee added") ? "green" : "red", fontWeight: 500}}>{msg}</div>}
+      <h3 style={{color:"#b91c1c"}}>{initialData ? "Edit Employee" : "Add Employee"}</h3>
+      {msg && <div className="small" style={{color: msg.includes("Error") ? "red" : "green", fontWeight: 500}}>{msg}</div>}
       <br />
       <form onSubmit={handle}>
-        
-        {/* Row 1: Name and Email */}
         <div className="form-row">
           <input className="input" placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} required />
-          <input className="input" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+          <input className="input" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required disabled={!!initialData} />
         </div>
         
-        {/* Row 2: Department and Position (Fixed layout) */}
         <div className="form-row">
           <div style={{ flex: 1 }}>
             <label>Department</label>
@@ -70,20 +77,13 @@ export default function EmployeeForm({ onAdd, api, token }) {
           </div>
           <div style={{ flex: 1 }}>
             <label>Position</label>
-            {/* Position input now uses the .input class correctly, fixing height */}
-            <input 
-                className="input" 
-                placeholder="Position" 
-                value={position} 
-                onChange={e=>setPosition(e.target.value)} 
-            />
+            <input className="input" placeholder="Position" value={position} onChange={e=>setPosition(e.target.value)} />
           </div>
         </div>
         
-        {/* Row 3: Manager Assignment (Optional) */}
         <div className="form-row">
           <div style={{flex: 1}}>
-            <label>Assign Manager (Optional)</label>
+            <label>Assign Manager</label>
             <select className="input" value={managerId} onChange={e=>setManagerId(e.target.value)}>
               <option value="">-- No Manager Assigned --</option>
               {managers.map(m => (
@@ -94,7 +94,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
         </div>
 
         <div style={{marginTop:10}}>
-          <button className="btn" disabled={saving}>{saving ? "Adding..." : "Add employee"}</button>
+          <button className="btn" disabled={saving}>{saving ? "Saving..." : (initialData ? "Update Employee" : "Add Employee")}</button>
         </div>
       </form>
     </div>
