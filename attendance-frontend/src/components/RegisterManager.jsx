@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const departments = [
   "Projects Dept",
@@ -101,6 +102,25 @@ export default function RegisterManager({ token, api }) {
 
   return (
     <div className="card">
+      <style>{`
+        .icon-btn {
+          border: none;
+          background: none;
+          cursor: pointer;
+          font-size: 16px;
+          padding: 6px;
+          border-radius: 4px;
+          transition: background 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .icon-btn.edit { color: #16a34a; }
+        .icon-btn.edit:hover { background: #dcfce7; }
+        .icon-btn.delete { color: #dc2626; }
+        .icon-btn.delete:hover { background: #fee2e2; }
+      `}</style>
+
       <h3 style={{ color: "#b91c1c" }}>Register Manager</h3>
 
       <form onSubmit={submit}>
@@ -222,15 +242,15 @@ export default function RegisterManager({ token, api }) {
                 <td>{m.email}</td>
                 <td>{m.department}</td>
                 <td style={{ textAlign: "center", display: "flex", gap: "5px", justifyContent: "center" }}>
-                  <button className="btn ghost" onClick={() => handleEditClick(m)} style={{padding: "5px 10px"}}>
-                    Edit
+                  <button className="icon-btn edit" onClick={() => handleEditClick(m)} title="Edit">
+                    <FaEdit />
                   </button>
                   <button
-                    className="btn"
-                    style={{ background: "#b91c1c", padding: "5px 10px" }}
+                    className="icon-btn delete"
                     onClick={() => deleteManager(m._id)}
+                    title="Delete"
                   >
-                    Delete
+                    <FaTrash />
                   </button>
                 </td>
               </tr>

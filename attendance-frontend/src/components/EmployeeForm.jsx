@@ -23,6 +23,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
 
   async function loadManagers() {
     try {
+      // API call to fetch all registered managers (REVISION 3)
       const list = await api.getManagers(token);
       setManagers(list);
     } catch (err) {
@@ -31,8 +32,10 @@ export default function EmployeeForm({ onAdd, api, token }) {
   }
 
   useEffect(() => {
-    loadManagers();
-  }, []);
+    if(token && api) {
+        loadManagers();
+    }
+  }, [token, api]);
 
   async function handle(e) {
     e.preventDefault();
@@ -60,11 +63,13 @@ export default function EmployeeForm({ onAdd, api, token }) {
       <br />
       <form onSubmit={handle}>
         
+        {/* Row 1: Name and Email */}
         <div className="form-row">
           <input className="input" placeholder="Full name" value={name} onChange={e=>setName(e.target.value)} required />
           <input className="input" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
         </div>
         
+        {/* Row 2: Department and Position (Fixed layout) */}
         <div className="form-row">
           <div style={{ flex: 1 }}>
             <label>Department</label>
@@ -74,6 +79,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
           </div>
           <div style={{ flex: 1 }}>
             <label>Position</label>
+            {/* Position input now uses the .input class correctly, fixing height */}
             <input 
                 className="input" 
                 placeholder="Position" 
@@ -83,6 +89,7 @@ export default function EmployeeForm({ onAdd, api, token }) {
           </div>
         </div>
         
+        {/* Row 3: Manager Assignment (Optional) */}
         <div className="form-row">
           <div style={{flex: 1}}>
             <label>Assign Manager (Optional)</label>

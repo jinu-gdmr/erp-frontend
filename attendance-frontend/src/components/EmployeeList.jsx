@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Import api for loading managers inside edit modal
+import api from "../api"; 
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const departments = [
   "Projects Dept",
@@ -12,7 +13,7 @@ const departments = [
   "Digital Marketing Dept"
 ];
 
-export default function EmployeeList({ employees, onDelete, onSelect }) {
+export default function EmployeeList({ employees, onDelete, onSelect, onRefresh }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -53,7 +54,13 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
     try {
       await api.editEmployee(editingEmployee._id, editingEmployee, token);
       alert("Employee updated! Refreshing...");
-      window.location.reload(); // Simple reload to reflect changes
+      
+      // ✅ Use parent callback instead of page reload
+      if (onRefresh) {
+        onRefresh(); 
+      }
+      setShowEditModal(false);
+      setEditingEmployee(null);
     } catch (err) {
       alert("Error updating employee");
     }
@@ -61,6 +68,25 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
 
   return (
     <>
+      <style>{`
+        .icon-btn {
+          border: none;
+          background: none;
+          cursor: pointer;
+          font-size: 16px;
+          padding: 6px;
+          border-radius: 4px;
+          transition: background 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .icon-btn.edit { color: #16a34a; }
+        .icon-btn.edit:hover { background: #dcfce7; }
+        .icon-btn.delete { color: #dc2626; }
+        .icon-btn.delete:hover { background: #fee2e2; }
+      `}</style>
+
       <div className="card">
         <h3 style={{ color: "#b91c1c" }}>Employee List</h3>
         <table className="table">
@@ -70,7 +96,7 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
               <th>Email</th>
               <th>Department</th>
               <th>Manager</th>
-              <th>Actions</th>
+              <th style={{textAlign: "center"}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -79,12 +105,13 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
                 <td>
                   <button
                     className="link-btn"
-                    onClick={() => onSelect(e)}
+                    onClick={() => onSelect && onSelect(e)}
                     style={{
                       color: "#b91c1c",
                       background: "none",
                       border: "none",
                       cursor: "pointer",
+                      fontWeight: 500
                     }}
                   >
                     {e.name}
@@ -93,20 +120,21 @@ export default function EmployeeList({ employees, onDelete, onSelect }) {
                 <td>{e.email}</td>
                 <td>{e.department || "-"}</td>
                 <td>{e.manager_name || "-"}</td>
-                <td style={{display:'flex', gap:5}}>
+                <td style={{display:'flex', gap:8, justifyContent: "center"}}>
+                  {/* ✅ Icons instead of buttons */}
                   <button 
-                    className="btn ghost" 
+                    className="icon-btn edit" 
                     onClick={() => handleEditClick(e)}
-                    style={{padding: "6px 10px", fontSize: 13}}
+                    title="Edit"
                   >
-                    Edit
+                    <FaEdit />
                   </button>
                   <button
-                    className="btn"
-                    style={{background: "#b91c1c", padding: "6px 10px", fontSize: 13}}
+                    className="icon-btn delete"
                     onClick={() => handleDeleteClick(e._id)}
+                    title="Delete"
                   >
-                    Delete
+                    <FaTrash />
                   </button>
                 </td>
               </tr>
