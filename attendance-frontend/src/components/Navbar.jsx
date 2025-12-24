@@ -24,7 +24,7 @@ export default function Navbar({ user, onLogout }) {
           <img src={Logo} alt="GDMR Logo" className="logo-img" />
           <div>
             <div style={{ fontWeight: 700 }}>GDMR CONNECT</div>
-            <div className="small">Simple attendance & leave management</div>
+            <div className="small">Simple Attendance & Leave Management</div>
           </div>
         </div>
 

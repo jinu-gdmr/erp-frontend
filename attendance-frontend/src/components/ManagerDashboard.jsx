@@ -44,6 +44,9 @@ export default function ManagerDashboard({ token, api }) {
   const pendingLeaves = myLeaves.filter(l => l.status === 'Pending');
   const approvedLeaves = myLeaves.filter(l => l.status === 'Approved');
   const rejectedLeaves = myLeaves.filter(l => l.status === 'Rejected');
+  
+  const MAX_WORDS = 30; // UPDATED: Word count limit
+  const MAX_FILE_SIZE_MB = 5;
 
   async function load() {
     setLoading(true);
@@ -135,6 +138,37 @@ export default function ManagerDashboard({ token, api }) {
       alert("Error applying leave: " + (err.message || ""));
     }
   }
+  
+  // Handle Reason Word Count
+  const handleReasonChange = (e) => {
+    const val = e.target.value;
+    const words = val.trim().split(/\s+/).filter(w => w.length > 0);
+    
+    if (words.length <= MAX_WORDS) {
+      setReason(val);
+    }
+  };
+
+  const getWordCount = () => {
+      return reason.trim() === "" ? 0 : reason.trim().split(/\s+/).filter(w => w.length > 0).length;
+  }
+  
+  // Handle File Upload with Size Check
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+        // Size in bytes: 5MB = 5 * 1024 * 1024
+        const maxSize = MAX_FILE_SIZE_MB * 1024 * 1024;
+        
+        if (selectedFile.size > maxSize) {
+            alert(`File is too large. Maximum size allowed is ${MAX_FILE_SIZE_MB}MB.`);
+            e.target.value = null; // Clear input
+            setFile(null);
+        } else {
+            setFile(selectedFile);
+        }
+    }
+  };
 
   function handleStatClick(title, list) {
     setModalTitle(title);
@@ -225,7 +259,7 @@ export default function ManagerDashboard({ token, api }) {
           </div>
 
           <div className="card dashboard-widget">
-            <h4 className="widget-title">My Leave Stats</h4>
+            <h4 className="widget-title">My Leave Status</h4>
             <div className="stats-list">
               <StatItem icon={<FaHourglassHalf />} label="Pending" count={pendingLeaves.length} colorClass="text-orange" onClick={() => handleStatClick("My Pending", pendingLeaves)} />
               <StatItem icon={<FaCheckCircle />} label="Approved" count={approvedLeaves.length} colorClass="text-green" onClick={() => handleStatClick("My Approved", approvedLeaves)} />
@@ -246,10 +280,12 @@ export default function ManagerDashboard({ token, api }) {
             <div style={{display:'flex', gap:20, marginBottom:15}}>
                 <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
                     <input type="radio" name="duration" checked={leaveDuration === 'single'} onChange={() => setLeaveDuration('single')} />
+                    <FaCalendarAlt style={{color: "var(--red)"}} />
                     <span style={{fontWeight:500}}>Single Day</span>
                 </label>
                 <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
                     <input type="radio" name="duration" checked={leaveDuration === 'multiple'} onChange={() => setLeaveDuration('multiple')} />
+                    <FaCalendarAlt style={{color: "var(--red)"}} />
                     <span style={{fontWeight:500}}>Multiple Days</span>
                 </label>
             </div>
@@ -280,15 +316,23 @@ export default function ManagerDashboard({ token, api }) {
 
             <div style={{marginTop: 15}}>
               <label className="modern-label">Reason for Leave</label>
-              <textarea className="modern-input" style={{minHeight: "100px", resize: "vertical"}} value={reason} onChange={(e) => setReason(e.target.value)} required placeholder="Reason..." />
+              <textarea className="modern-input" style={{minHeight: "100px", resize: "vertical"}} value={reason} onChange={handleReasonChange} required placeholder="Reason (Max 30 words)..." />
+              <div className="small" style={{textAlign:'right', marginTop:4, color: getWordCount() === MAX_WORDS ? 'red' : '#777'}}>
+                 {getWordCount()}/{MAX_WORDS} words
+              </div>
             </div>
 
             <div style={{marginTop: 15}}>
               <label className="modern-label">Attachment (Optional)</label>
               <label className="file-upload-label">
                 <FaCloudUploadAlt size={24} />
-                <span>{file ? file.name : "Click to upload"}</span>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files[0])} style={{display: "none"}} />
+                <span>{file ? file.name : "Click to upload a document (Max 5MB)"}</span>
+                <input 
+                    type="file" 
+                    accept=".pdf,.jpg,.jpeg,.png" 
+                    onChange={handleFileChange} 
+                    style={{display: "none"}} 
+                />
               </label>
             </div>
 
@@ -313,7 +357,7 @@ export default function ManagerDashboard({ token, api }) {
                       <td style={{fontWeight:500}}>{l.from_date && l.to_date && l.from_date !== l.to_date ? `${l.from_date} to ${l.to_date}` : l.date}</td>
                       <td style={{textTransform:"capitalize"}}>{l.type}</td>
                       <td><span className={`status-badge ${getStatusClass(l.status)}`}>{l.status || 'Pending'}</span></td>
-                      <td>{l.attachment_url ? <a href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View</a> : "-"}</td>
+                      <td>{l.attachment_url ? <a href={l.attachment_url.startsWith('http') ? l.attachment_url : `https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} target="_blank" rel="noreferrer" style={{color:"var(--red)", fontSize:13}}>View</a> : "-"}</td>
                     </tr>
                   ))
                 )}
