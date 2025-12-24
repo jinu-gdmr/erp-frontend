@@ -86,7 +86,7 @@ export default function AdminLeavePage({ token, api }) {
                     {l.attachment_url && (
                       <div style={{ marginTop: "4px" }}>
                         <a 
-                          href={`https://erp-backend-production-d377.up.railway.app${l.attachment_url}`} 
+                          href={l.attachment_url.startsWith('http') ? l.attachment_url : `https://erp-backend-production-d377.up.railway.app${l.attachment_url}`}
                           target="_blank" 
                           rel="noreferrer"
                           style={{ color: "var(--red)", fontSize: "12px", textDecoration: "underline" }}
