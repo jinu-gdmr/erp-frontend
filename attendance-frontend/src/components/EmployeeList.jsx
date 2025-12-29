@@ -66,6 +66,9 @@ export default function EmployeeList({ employees, onDelete, onSelect, onRefresh 
     }
   };
 
+  // Change #4: Loading State
+  if (!employees) return <div className="loader-container"><div className="loader"></div></div>;
+
   return (
     <>
       <style>{`
@@ -89,6 +92,9 @@ export default function EmployeeList({ employees, onDelete, onSelect, onRefresh 
 
       <div className="card">
         <h3 style={{ color: "#b91c1c" }}>Employee List</h3>
+        {employees.length === 0 ? (
+            <p style={{padding:20, color:'#888'}}>No employees found.</p>
+        ) : (
         <table className="table">
           <thead>
             <tr>
@@ -141,6 +147,7 @@ export default function EmployeeList({ employees, onDelete, onSelect, onRefresh 
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}

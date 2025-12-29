@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 export default function AdminManagers({ token, api }) {
   const [managers, setManagers] = useState([]);
@@ -36,13 +37,15 @@ export default function AdminManagers({ token, api }) {
       <h2 style={{ color: "#b91c1c" }}>Managers List</h2>
 
       {error && <p className="alert">{error}</p>}
-      {loading && <p>Loading...</p>}
+      
+      {/* Change #4: Loader */}
+      {loading && <div className="loader-container"><div className="loader"></div></div>}
 
       {!loading && managers.length === 0 && (
         <p>No Managers Added Yet.</p>
       )}
 
-      {managers.length > 0 && (
+      {!loading && managers.length > 0 && (
         <div className="leave-table-wrapper">
           <table className="leave-table">
             <thead>
@@ -59,11 +62,12 @@ export default function AdminManagers({ token, api }) {
                   <td>{m.email}</td>
                   <td style={{ textAlign: "center" }}>
                     <button
-                      className="btn"
-                      style={{ background: "#b91c1c" }}
+                      className="icon-btn delete"
+                      style={{margin:'0 auto'}}
                       onClick={() => deleteManager(m._id)}
+                      title="Delete"
                     >
-                      Delete
+                      <FaTrash />
                     </button>
                   </td>
                 </tr>
