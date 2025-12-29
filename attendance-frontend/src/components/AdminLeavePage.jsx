@@ -44,9 +44,10 @@ export default function AdminLeavePage({ token, api }) {
 
       {error && <div className="alert" style={{ margin: "20px" }}>{error}</div>}
       
-      {loading && <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>Loading...</div>}
+      {/* Change #4: Loader */}
+      {loading && <div className="loader-container"><div className="loader"></div></div>}
       
-      {!loading && leaves.length === 0 && (
+      {!loading && leaves.length === 0 && !error && (
         <div style={{ padding: "30px", textAlign: "center", color: "#888" }}>
           No leave requests found.
         </div>
